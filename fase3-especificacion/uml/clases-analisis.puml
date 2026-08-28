@@ -1,0 +1,137 @@
+@startuml clases-analisis
+' Rama tradicional - clases de analisis (actualizado 25/08/2026 tras Entrevista 1)
+' Nota: se evita el uso de parentesis en los atributos porque con "hide methods"
+' PlantUML los interpretaria como metodos y los ocultaria.
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide methods
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam ArrowColor #6B7280
+skinparam ArrowThickness 1.1
+skinparam ArrowFontColor #4B5563
+skinparam ArrowFontSize 10
+skinparam TitleFontName "Segoe UI Semibold"
+skinparam TitleFontSize 17
+skinparam TitleFontColor #111827
+skinparam class {
+  BackgroundColor #F7F8FA
+  BorderColor #CB0017
+  BorderThickness 1.2
+  FontColor #111827
+  FontStyle bold
+  AttributeFontColor #4B5563
+  AttributeFontSize 11
+}
+skinparam note {
+  BackgroundColor #FFF7ED
+  BorderColor #F59E0B
+  FontColor #7C2D12
+  FontSize 10
+}
+
+title Clases de análisis --- Senda URJC
+
+class Usuario {
+  credencialCorporativa
+  colectivo: est/PDI/PTGAS
+  idioma: ES/EN/ZH
+  discapacidad o movilidad
+}
+
+class ContactoConfianza {
+  nombre
+  medioDeContacto
+  ambito: solo comunidad URJC
+}
+
+class Voluntario {
+  estadoInscripcion
+  disponibilidad: calendario
+  acompanamiento: fisico
+}
+
+class Trayecto {
+  estado
+  horaInicio
+  horaFin
+  modoVoyContigo: bool
+}
+
+class Ruta {
+  indiceSeguridad
+  esActiva: bool
+}
+
+class Tramo {
+  nivelIluminacion: lux
+  afluencia: 0-100
+  estadoEntorno
+}
+
+class DatoLumenSmart {
+  estadoFarola
+  intensidadLuminica
+  iluminanciaLux
+  afluenciaZona
+  marcaDeTiempo
+}
+
+class Prealerta {
+  motivo: parada/desvio
+  horaEmision
+  confirmada: bool
+}
+
+class Alerta {
+  tipo: 30s o SOS
+  ultimaUbicacion
+  destinatario
+}
+
+class Incidencia {
+  tipo: farola/zona/obstaculo/dificultad
+  ubicacion
+  fecha
+  gradoInseguridad: fijado por admin
+}
+
+class Ticket {
+  estado: abierto/enCurso/resuelto
+  gravedad: grave/media
+  responsable: URJC o LumenSmart
+}
+
+class ParametroSeguridad {
+  ambito: campus/dia/hora
+  pesos: ilum/aflu/entorno
+  umbrales
+}
+
+class Estadistica {
+  periodo
+  agregadoAnonimizado
+}
+
+Usuario "1" -- "0..1" ContactoConfianza : configura >
+Usuario "1" -- "0..1" Voluntario : se inscribe como >
+Usuario "1" -- "0..*" Trayecto : realiza >
+Trayecto "1" -- "1..*" Ruta : sigue, recalculo re-ancla >
+Ruta "1" -- "1..*" Tramo : se compone de >
+Tramo "1" -- "0..*" DatoLumenSmart : se valora con >
+Trayecto "1" -- "0..*" Prealerta : genera >
+Prealerta "1" -- "0..1" Alerta : escala a >
+Trayecto "0..1" -- "0..1" Voluntario : acompañado por >
+Alerta "0..*" -- "0..1" ContactoConfianza : notifica a >
+Usuario "1" -- "0..*" Incidencia : reporta >
+Incidencia "1" -- "1" Ticket : genera >
+Incidencia "0..*" -- "1..*" Tramo : penaliza >
+ParametroSeguridad "1..*" -- "0..*" Ruta : pondera el indice de >
+Trayecto "0..*" -- "0..*" Estadistica : se agrega en >
+
+note right of Ruta : historial máx. 24 h\nsalvo incidencia (RNF-02)
+note bottom of Ticket : derivación URJC / LumenSmart\n[S-10, Entrevista 1]
+note bottom of Incidencia : penalización manual\ndel admin [S-12]
+note right of Prealerta : umbrales configurables\n[S-05]
+@enduml

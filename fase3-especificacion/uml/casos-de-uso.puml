@@ -1,0 +1,95 @@
+@startuml casos-de-uso
+' Rama tradicional - catalogo CU-01..CU-10 (actualizado 25/08/2026 tras Entrevista 1)
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype polyline
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam ArrowColor #6B7280
+skinparam ArrowThickness 1.1
+skinparam ArrowFontColor #4B5563
+skinparam ArrowFontSize 10
+skinparam TitleFontName "Segoe UI Semibold"
+skinparam TitleFontSize 17
+skinparam TitleFontColor #111827
+skinparam usecase {
+  BackgroundColor #F7F8FA
+  BorderColor #CB0017
+  BorderThickness 1.2
+  FontColor #111827
+  FontSize 12
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #374151
+  FontColor #111827
+}
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #D1D5DB
+  FontColor #6B7280
+}
+skinparam note {
+  BackgroundColor #FFF7ED
+  BorderColor #F59E0B
+  FontColor #7C2D12
+  FontSize 10
+}
+
+title Casos de uso --- Senda URJC
+
+actor "Usuario\n(comunidad URJC)" as Usuario
+actor "Voluntario" as Voluntario
+actor "Administración web\n(PDI/PTGAS)" as Admin
+
+rectangle "Senda URJC" {
+  usecase "CU-01 Autenticarse\n(SSO / LDAP)" as CU01
+  usecase "CU-02 Solicitar\nruta segura" as CU02
+  usecase "CU-03 Realizar trayecto\ncon modo «Voy contigo»" as CU03
+  usecase "CU-04 Usar botón de\nemergencia (SOS)" as CU04
+  usecase "CU-05 Reportar incidencia\ndel entorno" as CU05
+  usecase "CU-06 Configurar perfil\n(contacto / voluntario)" as CU06
+  usecase "CU-07 Atender solicitud de\nacompañamiento (físico)" as CU07
+  usecase "CU-08 Gestionar tickets\nde incidencias (web)" as CU08
+  usecase "CU-09 Estadísticas y\nmapas de calor (web)" as CU09
+  usecase "CU-10 Ajustar parámetros\nde seguridad (web)" as CU10
+}
+
+actor "Contacto de\nconfianza" as Contacto
+actor "Servicio de Seguridad\n(cuentas genéricas)" as Seguridad
+actor "LumenSmart\n<<sistema externo>>" as Lumen
+
+Usuario --> CU01
+Usuario --> CU02
+Usuario --> CU03
+Usuario --> CU04
+Usuario --> CU05
+Usuario --> CU06
+Voluntario --> CU07
+Admin --> CU08
+Admin --> CU09
+Admin --> CU10
+
+CU02 ..> CU01 : <<include>>
+CU03 ..> CU02 : <<include>>
+CU04 .> CU03 : <<extend>>
+CU07 .> CU03 : <<extend>>
+
+CU03 --> Contacto
+CU03 --> Seguridad
+CU04 --> Seguridad
+CU02 <-- Lumen
+CU03 <-- Lumen
+
+note bottom of CU08
+  App móvil = uso general (CU-01..07);
+  panel web = administración (CU-08..10)
+  [Entrevista 1, corrige S-11]
+end note
+note bottom of CU04
+  Funcionalidad asumida
+  [SUPUESTO S-04]
+end note
+@enduml

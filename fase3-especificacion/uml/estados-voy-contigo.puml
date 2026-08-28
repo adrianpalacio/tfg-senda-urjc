@@ -1,0 +1,56 @@
+@startuml estados-voy-contigo
+' Diagrama de estados del trayecto con modo "Voy contigo" activo
+' Derivado del parrafo rosado 1 del enunciado + CU-03 (F3).
+' Actualizado 27/08/2026: transicion de perdida de cobertura (S-03) + estilo.
+
+' ---- estilo limpio (evita el look por defecto) ----
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 13
+skinparam ArrowColor #6B7280
+skinparam ArrowThickness 1.2
+skinparam ArrowFontColor #4B5563
+skinparam ArrowFontSize 11
+skinparam TitleFontName "Segoe UI Semibold"
+skinparam TitleFontSize 17
+skinparam TitleFontColor #111827
+skinparam state {
+  BackgroundColor #F7F8FA
+  BorderColor #CB0017
+  BorderThickness 1.4
+  RoundCorner 14
+  FontColor #111827
+  FontStyle bold
+  FontSize 13
+  AttributeFontColor #4B5563
+  AttributeFontSize 11
+  StartColor #CB0017
+  EndColor #111827
+}
+
+title Trayecto con modo «Voy contigo» activo
+
+state "Configurado" as Configurado : destinatario elegido:\ncontacto o voluntario (RF-07/08)
+state "En curso\n(supervisado)" as EnCurso : ubicación compartida\nen tiempo real
+state "Prealerta" as Prealerta : vibración + notificación\n(RF-11)
+state "Alerta emitida" as Alerta : aviso con última ubicación\nal contacto o Seguridad (RF-12)\ncompartición sigue activa
+state "Finalizado" as Fin : cesa la compartición\nhistorial 24 h si no hay incidencia
+
+[*] --> Configurado : usuario activa el modo\nantes de iniciar (RF-06)
+Configurado --> EnCurso : inicia el trayecto
+EnCurso --> Prealerta : desvío > ancho del camino (~2 m),\nparada por inactividad [S-05]\no pérdida de cobertura [S-03]
+Prealerta --> EnCurso : confirma «estoy bien»\nen plazo (30 s por defecto)
+Prealerta --> Alerta : sin confirmar en 30 s\n(configurable por el usuario) [S-05]
+EnCurso --> EnCurso : solicita ruta nueva:\nse re-ancla sin alerta [S-06] (RF-13)
+EnCurso --> Alerta : botón SOS [S-04] (RF-14)
+Prealerta --> Alerta : botón SOS [S-04]
+Alerta --> Fin : incidencia atendida /\ntrayecto cerrado\n(retención según [S-09])
+EnCurso --> Fin : llega al destino
+Fin --> [*]
+
+note bottom of Alerta
+  Si la alerta se dispara sin cobertura (S-03),
+  queda registrada y se entrega al recuperarla.
+end note
+@enduml
