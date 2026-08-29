@@ -1,0 +1,3536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Senda URJC — Prototipo navegable</title>
+
+<style>
+:root{
+  --primary:#174ea6;
+  --primary-dark:#0f3b80;
+  --secondary:#0b6e4f;
+  --danger:#b42318;
+  --warning:#b54708;
+  --success:#087443;
+  --bg:#f4f6f8;
+  --surface:#ffffff;
+  --text:#17202a;
+  --muted:#667085;
+  --border:#d9dee7;
+  --shadow:0 4px 16px rgba(16,24,40,.08);
+  --radius:14px;
+  --font-size:16px;
+}
+
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  padding:0;
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:var(--font-size);
+  background:var(--bg);
+  color:var(--text);
+}
+
+button,input,select,textarea{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+.hidden{display:none!important}
+
+.app{
+  min-height:100vh;
+}
+
+/* =========================
+   LOGIN
+========================= */
+
+.login-screen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:linear-gradient(135deg,#eaf1ff,#f5f8fc);
+}
+
+.login-card{
+  width:100%;
+  max-width:440px;
+  background:white;
+  padding:38px;
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  border:1px solid var(--border);
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:25px;
+}
+
+.logo-mark{
+  width:48px;
+  height:48px;
+  border-radius:13px;
+  background:var(--primary);
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:bold;
+  font-size:21px;
+}
+
+.logo h1{
+  margin:0;
+  font-size:25px;
+}
+
+.logo span{
+  color:var(--muted);
+  font-size:13px;
+}
+
+.login-card h2{
+  margin-bottom:8px;
+}
+
+.login-card p{
+  color:var(--muted);
+  line-height:1.5;
+}
+
+.input-group{
+  margin:17px 0;
+}
+
+.input-group label{
+  display:block;
+  font-weight:bold;
+  margin-bottom:7px;
+}
+
+.input-group input,
+.input-group select,
+.input-group textarea{
+  width:100%;
+  padding:12px 13px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:white;
+}
+
+.primary-btn,
+.secondary-btn,
+.danger-btn,
+.outline-btn{
+  border:0;
+  border-radius:9px;
+  padding:12px 17px;
+  font-weight:bold;
+}
+
+.primary-btn{
+  background:var(--primary);
+  color:white;
+}
+
+.primary-btn:hover{
+  background:var(--primary-dark);
+}
+
+.secondary-btn{
+  background:#e7f5ef;
+  color:#075b40;
+}
+
+.danger-btn{
+  background:#fde8e7;
+  color:var(--danger);
+}
+
+.outline-btn{
+  background:white;
+  color:var(--text);
+  border:1px solid var(--border);
+}
+
+.full{
+  width:100%;
+}
+
+.demo-note{
+  margin-top:18px;
+  font-size:13px;
+  padding:12px;
+  background:#f6f8fa;
+  border-radius:8px;
+}
+
+/* =========================
+   LAYOUT
+========================= */
+
+.main-layout{
+  min-height:100vh;
+  display:flex;
+}
+
+.sidebar{
+  width:245px;
+  background:#102a43;
+  color:white;
+  padding:20px 14px;
+  position:fixed;
+  left:0;
+  top:0;
+  bottom:0;
+  overflow:auto;
+}
+
+.sidebar .logo{
+  margin:4px 8px 28px;
+}
+
+.sidebar .logo-mark{
+  background:#3b82f6;
+}
+
+.sidebar .logo h1{
+  font-size:19px;
+}
+
+.sidebar .logo span{
+  color:#b9c7d8;
+}
+
+.nav-section{
+  color:#9fb2c7;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  margin:18px 10px 7px;
+}
+
+.nav-btn{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:11px 12px;
+  background:transparent;
+  border:0;
+  border-radius:8px;
+  color:#dce6f0;
+  text-align:left;
+  margin-bottom:3px;
+}
+
+.nav-btn:hover,
+.nav-btn.active{
+  background:#21496d;
+  color:white;
+}
+
+.content-area{
+  margin-left:245px;
+  width:calc(100% - 245px);
+  min-height:100vh;
+}
+
+.topbar{
+  height:70px;
+  background:white;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 28px;
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+
+.topbar-title{
+  font-weight:bold;
+  font-size:19px;
+}
+
+.user-menu{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.avatar{
+  width:38px;
+  height:38px;
+  background:#dce9ff;
+  color:var(--primary);
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:bold;
+}
+
+.page{
+  display:none;
+  padding:28px;
+  max-width:1350px;
+  margin:auto;
+}
+
+.page.active{
+  display:block;
+}
+
+.page-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  margin-bottom:24px;
+}
+
+.page-header h2{
+  margin:0 0 6px;
+  font-size:26px;
+}
+
+.page-header p{
+  color:var(--muted);
+  margin:0;
+}
+
+/* =========================
+   CARDS
+========================= */
+
+.grid{
+  display:grid;
+  gap:18px;
+}
+
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px;
+  box-shadow:0 2px 7px rgba(16,24,40,.03);
+}
+
+.card h3{
+  margin:0 0 8px;
+}
+
+.card p{
+  line-height:1.5;
+}
+
+.stat{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.stat-number{
+  font-size:29px;
+  font-weight:bold;
+  margin-top:5px;
+}
+
+.stat-label{
+  color:var(--muted);
+  font-size:13px;
+}
+
+.stat-icon{
+  width:44px;
+  height:44px;
+  border-radius:11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#edf3ff;
+  color:var(--primary);
+  font-size:20px;
+}
+
+.section-title{
+  margin:30px 0 15px;
+  font-size:19px;
+}
+
+/* =========================
+   MAP
+========================= */
+
+.map-container{
+  height:430px;
+  border-radius:15px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  position:relative;
+  background:
+    linear-gradient(45deg,rgba(255,255,255,.65) 25%,transparent 25%),
+    linear-gradient(-45deg,rgba(255,255,255,.65) 25%,transparent 25%),
+    #dfe9d8;
+  background-size:70px 70px;
+}
+
+.map-road{
+  position:absolute;
+  height:9px;
+  background:#a7b4c2;
+  border-radius:10px;
+  transform-origin:left center;
+}
+
+.road1{width:75%;left:8%;top:48%;transform:rotate(-14deg)}
+.road2{width:65%;left:23%;top:69%;transform:rotate(23deg)}
+.road3{width:48%;left:15%;top:25%;transform:rotate(39deg)}
+.road4{width:45%;left:42%;top:20%;transform:rotate(85deg)}
+
+.route-line{
+  position:absolute;
+  height:7px;
+  background:#1769e0;
+  border-radius:10px;
+  left:16%;
+  top:58%;
+  width:65%;
+  transform:rotate(-9deg);
+  box-shadow:0 0 0 3px rgba(23,105,224,.15);
+}
+
+.map-point{
+  position:absolute;
+  width:21px;
+  height:21px;
+  border-radius:50%;
+  border:4px solid white;
+  box-shadow:0 2px 5px #555;
+}
+
+.origin-point{
+  background:#0b6e4f;
+  left:14%;
+  top:58%;
+}
+
+.destination-point{
+  background:#b42318;
+  right:13%;
+  top:48%;
+}
+
+.poi{
+  background:#f59e0b;
+}
+
+.poi1{left:42%;top:36%}
+.poi2{left:72%;top:64%}
+.poi3{left:30%;top:73%}
+
+.map-label{
+  position:absolute;
+  background:white;
+  padding:5px 8px;
+  border-radius:6px;
+  font-size:11px;
+  box-shadow:0 2px 5px rgba(0,0,0,.15);
+}
+
+.origin-label{left:9%;top:64%}
+.destination-label{right:5%;top:42%}
+
+.map-legend{
+  position:absolute;
+  bottom:12px;
+  left:12px;
+  background:white;
+  padding:10px;
+  border-radius:8px;
+  box-shadow:var(--shadow);
+  font-size:12px;
+}
+
+.legend-item{
+  display:flex;
+  gap:7px;
+  align-items:center;
+  margin:4px 0;
+}
+
+.dot{
+  width:11px;
+  height:11px;
+  border-radius:50%;
+}
+
+/* =========================
+   ROUTES
+========================= */
+
+.route-card{
+  border:2px solid var(--border);
+  border-radius:13px;
+  padding:17px;
+  background:white;
+  margin-bottom:12px;
+}
+
+.route-card.recommended{
+  border-color:#3b82f6;
+}
+
+.route-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.security{
+  font-weight:bold;
+  padding:6px 10px;
+  border-radius:20px;
+  font-size:13px;
+}
+
+.security.high{
+  background:#e5f7ee;
+  color:#087443;
+}
+
+.security.medium{
+  background:#fff4e5;
+  color:#a15c00;
+}
+
+.route-metrics{
+  display:flex;
+  gap:28px;
+  margin:14px 0;
+  color:var(--muted);
+}
+
+.route-metrics strong{
+  color:var(--text);
+  display:block;
+}
+
+.route-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.tag{
+  background:#f0f3f7;
+  padding:5px 8px;
+  border-radius:6px;
+  font-size:12px;
+}
+
+/* =========================
+   ALERTS
+========================= */
+
+.alert-box{
+  padding:18px;
+  border-radius:12px;
+  border:1px solid;
+  margin-bottom:18px;
+}
+
+.alert-pre{
+  background:#fff7e8;
+  border-color:#f3c77b;
+}
+
+.alert-active{
+  background:#fff0ef;
+  border-color:#e5a19b;
+}
+
+.alert-cancelled{
+  background:#eef8f2;
+  border-color:#a9d8bb;
+}
+
+.countdown{
+  font-size:40px;
+  font-weight:bold;
+  text-align:center;
+  margin:15px 0;
+  color:var(--danger);
+}
+
+/* =========================
+   TABLE
+========================= */
+
+.table-wrapper{
+  overflow:auto;
+  background:white;
+  border:1px solid var(--border);
+  border-radius:12px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:750px;
+}
+
+th,td{
+  padding:13px 15px;
+  text-align:left;
+  border-bottom:1px solid var(--border);
+}
+
+th{
+  background:#f8fafc;
+  font-size:13px;
+}
+
+.badge{
+  padding:5px 9px;
+  border-radius:15px;
+  font-size:12px;
+  font-weight:bold;
+}
+
+.badge.open{
+  background:#fff3e8;
+  color:#9c4f00;
+}
+
+.badge.progress{
+  background:#eaf1ff;
+  color:#1756a3;
+}
+
+.badge.resolved{
+  background:#e7f5ed;
+  color:#087443;
+}
+
+.badge.high{
+  background:#fde8e7;
+  color:#b42318;
+}
+
+/* =========================
+   FORM
+========================= */
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+}
+
+.form-full{
+  grid-column:1/-1;
+}
+
+.checkbox-row{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  margin:13px 0;
+}
+
+.checkbox-row input{
+  margin-top:4px;
+}
+
+/* =========================
+   PROGRESS
+========================= */
+
+.progress{
+  height:9px;
+  border-radius:10px;
+  background:#e7ebf0;
+  overflow:hidden;
+}
+
+.progress-bar{
+  height:100%;
+  background:var(--primary);
+}
+
+/* =========================
+   TOAST / MODAL
+========================= */
+
+.toast{
+  position:fixed;
+  right:22px;
+  bottom:22px;
+  background:#17202a;
+  color:white;
+  padding:13px 17px;
+  border-radius:9px;
+  box-shadow:var(--shadow);
+  z-index:100;
+  opacity:0;
+  transform:translateY(10px);
+  transition:.25s;
+}
+
+.toast.show{
+  opacity:1;
+  transform:translateY(0);
+}
+
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.55);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:90;
+  padding:20px;
+}
+
+.modal-overlay.show{
+  display:flex;
+}
+
+.modal{
+  width:100%;
+  max-width:520px;
+  background:white;
+  border-radius:15px;
+  padding:25px;
+  max-height:90vh;
+  overflow:auto;
+}
+
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.close{
+  border:0;
+  background:transparent;
+  font-size:25px;
+}
+
+/* =========================
+   HEATMAP
+========================= */
+
+.heatmap{
+  height:330px;
+  border-radius:12px;
+  position:relative;
+  overflow:hidden;
+  background:#e8eee5;
+}
+
+.heat{
+  position:absolute;
+  border-radius:50%;
+  filter:blur(13px);
+  opacity:.6;
+}
+
+.h1{width:140px;height:140px;left:15%;top:20%;background:#f87171}
+.h2{width:170px;height:170px;left:45%;top:42%;background:#fbbf24}
+.h3{width:130px;height:130px;right:12%;top:17%;background:#60a5fa}
+.h4{width:100px;height:100px;left:25%;bottom:3%;background:#34d399}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+.mobile-menu{
+  display:none;
+}
+
+@media(max-width:900px){
+  .sidebar{
+    transform:translateX(-100%);
+    transition:.25s;
+    z-index:50;
+  }
+
+  .sidebar.open{
+    transform:translateX(0);
+  }
+
+  .content-area{
+    margin-left:0;
+    width:100%;
+  }
+
+  .mobile-menu{
+    display:block;
+    border:0;
+    background:transparent;
+    font-size:23px;
+  }
+
+  .grid-3,.grid-4{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+@media(max-width:620px){
+  .page{
+    padding:18px;
+  }
+
+  .topbar{
+    padding:0 15px;
+  }
+
+  .grid-2,.grid-3,.grid-4,
+  .form-grid{
+    grid-template-columns:1fr;
+  }
+
+  .page-header{
+    flex-direction:column;
+  }
+
+  .login-card{
+    padding:25px;
+  }
+
+  .route-metrics{
+    flex-wrap:wrap;
+    gap:14px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ============================================================
+     LOGIN
+============================================================ -->
+
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+
+    <div class="logo">
+      <div class="logo-mark">S</div>
+      <div>
+        <h1>Senda URJC</h1>
+        <span>Movilidad universitaria segura</span>
+      </div>
+    </div>
+
+    <h2>Acceso institucional</h2>
+    <p>
+      Inicia sesión con tu cuenta institucional de la Universidad Rey Juan Carlos.
+    </p>
+
+    <div class="input-group">
+      <label for="loginUser">Cuenta URJC</label>
+      <input id="loginUser" type="text" placeholder="usuario@urjc.es">
+    </div>
+
+    <button class="primary-btn full" onclick="login()">
+      Iniciar sesión con SSO URJC
+    </button>
+
+    <div class="demo-note">
+      <strong>Modo prototipo:</strong><br>
+      Puedes utilizar cualquier usuario. También puedes entrar como
+      administrador con el botón de demostración.
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="outline-btn full" onclick="demoLogin('usuario@urjc.es')">
+        Usuario
+      </button>
+      <button class="outline-btn full" onclick="demoLogin('admin@urjc.es')">
+        Administrador
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================
+     APP
+============================================================ -->
+
+<div id="app" class="main-layout hidden">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="sidebar">
+
+    <div class="logo">
+      <div class="logo-mark">S</div>
+      <div>
+        <h1>Senda URJC</h1>
+        <span>Movilidad segura</span>
+      </div>
+    </div>
+
+    <div class="nav-section">Movilidad</div>
+
+    <button class="nav-btn active" data-page="home" onclick="navigate('home')">
+      🏠 Inicio
+    </button>
+
+    <button class="nav-btn" data-page="routes" onclick="navigate('routes')">
+      🧭 Solicitar ruta
+    </button>
+
+    <button class="nav-btn" data-page="tracking" onclick="navigate('tracking')">
+      📍 Ruta activa
+    </button>
+
+    <button class="nav-btn" data-page="history" onclick="navigate('history')">
+      🕘 Historial
+    </button>
+
+    <div class="nav-section">Seguridad</div>
+
+    <button class="nav-btn" data-page="alerts" onclick="navigate('alerts')">
+      🚨 Alertas
+    </button>
+
+    <button class="nav-btn" data-page="contacts" onclick="navigate('contacts')">
+      👥 Contactos de confianza
+    </button>
+
+    <button class="nav-btn" data-page="incident" onclick="navigate('incident')">
+      ⚠️ Registrar incidencia
+    </button>
+
+    <button class="nav-btn" data-page="volunteer" onclick="navigate('volunteer')">
+      🤝 Voluntariado
+    </button>
+
+    <div class="nav-section">Cuenta</div>
+
+    <button class="nav-btn" data-page="profile" onclick="navigate('profile')">
+      👤 Perfil y preferencias
+    </button>
+
+    <button class="nav-btn" onclick="showPrivacy()">
+      🔒 Privacidad
+    </button>
+
+    <div id="adminNav">
+
+      <div class="nav-section">Administración</div>
+
+      <button class="nav-btn" data-page="admin" onclick="navigate('admin')">
+        🛠️ Panel administrativo
+      </button>
+
+      <button class="nav-btn" data-page="adminIncidents" onclick="navigate('adminIncidents')">
+        📋 Incidencias
+      </button>
+
+      <button class="nav-btn" data-page="securityConfig" onclick="navigate('securityConfig')">
+        ⚙️ Seguridad
+      </button>
+
+      <button class="nav-btn" data-page="statistics" onclick="navigate('statistics')">
+        📊 Estadísticas
+      </button>
+
+      <button class="nav-btn" data-page="reports" onclick="navigate('reports')">
+        📑 Informes
+      </button>
+
+    </div>
+
+    <div style="margin-top:25px">
+      <button class="nav-btn" onclick="logout()">
+        ↪️ Cerrar sesión
+      </button>
+    </div>
+
+  </aside>
+
+
+  <!-- CONTENT -->
+
+  <section class="content-area">
+
+    <header class="topbar">
+
+      <div style="display:flex;align-items:center;gap:13px">
+        <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
+        <div id="pageTitle" class="topbar-title">Inicio</div>
+      </div>
+
+      <div class="user-menu">
+        <span id="topUser">Usuario URJC</span>
+        <div class="avatar" id="avatar">U</div>
+      </div>
+
+    </header>
+
+
+    <!-- ========================================================
+         HOME
+    ========================================================= -->
+
+    <main id="home" class="page active">
+
+      <div class="page-header">
+        <div>
+          <h2>Buenos días</h2>
+          <p>¿A dónde quieres ir hoy?</p>
+        </div>
+
+        <button class="primary-btn" onclick="navigate('routes')">
+          + Solicitar ruta
+        </button>
+      </div>
+
+      <div class="grid grid-4">
+
+        <div class="card stat">
+          <div>
+            <div class="stat-label">Rutas este mes</div>
+            <div class="stat-number">12</div>
+          </div>
+          <div class="stat-icon">🧭</div>
+        </div>
+
+        <div class="card stat">
+          <div>
+            <div class="stat-label">Ruta activa</div>
+            <div class="stat-number">No</div>
+          </div>
+          <div class="stat-icon">📍</div>
+        </div>
+
+        <div class="card stat">
+          <div>
+            <div class="stat-label">Contactos de confianza</div>
+            <div class="stat-number">2</div>
+          </div>
+          <div class="stat-icon">👥</div>
+        </div>
+
+        <div class="card stat">
+          <div>
+            <div class="stat-label">Estado del servicio</div>
+            <div class="stat-number" style="font-size:20px;color:var(--success)">
+              Operativo
+            </div>
+          </div>
+          <div class="stat-icon">✓</div>
+        </div>
+
+      </div>
+
+
+      <div class="section-title">Acciones rápidas</div>
+
+      <div class="grid grid-3">
+
+        <div class="card">
+          <h3>🧭 Encontrar una ruta</h3>
+          <p>Selecciona origen y destino y te mostraremos las opciones priorizando la seguridad.</p>
+          <button class="primary-btn" onclick="navigate('routes')">
+            Buscar ruta
+          </button>
+        </div>
+
+        <div class="card">
+          <h3>🚨 Seguridad</h3>
+          <p>Configura tus contactos de confianza y revisa las preferencias de alertas.</p>
+          <button class="outline-btn" onclick="navigate('contacts')">
+            Ver contactos
+          </button>
+        </div>
+
+        <div class="card">
+          <h3>🤝 Acompañamiento</h3>
+          <p>Solicita acompañamiento presencial a una persona voluntaria disponible.</p>
+          <button class="secondary-btn" onclick="navigate('volunteer')">
+            Solicitar acompañamiento
+          </button>
+        </div>
+
+      </div>
+
+
+      <div class="section-title">Mapa del campus</div>
+
+      <div class="card">
+
+        <div class="map-container">
+
+          <div class="map-road road1"></div>
+          <div class="map-road road2"></div>
+          <div class="map-road road3"></div>
+          <div class="map-road road4"></div>
+
+          <div class="map-point origin-point"></div>
+          <div class="map-point destination-point"></div>
+
+          <div class="map-point poi poi1"></div>
+          <div class="map-point poi poi2"></div>
+          <div class="map-point poi poi3"></div>
+
+          <div class="map-label origin-label">Campus</div>
+          <div class="map-label destination-label">Estación</div>
+
+          <div class="map-legend">
+            <div class="legend-item">
+              <span class="dot" style="background:#0b6e4f"></span>
+              Punto de partida
+            </div>
+            <div class="legend-item">
+              <span class="dot" style="background:#b42318"></span>
+              Destino
+            </div>
+            <div class="legend-item">
+              <span class="dot" style="background:#f59e0b"></span>
+              Punto de interés
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+
+    <!-- ========================================================
+         ROUTES
+    ========================================================= -->
+
+    <main id="routes" class="page">
+
+      <div class="page-header">
+        <div>
+          <h2>Solicitar una ruta</h2>
+          <p>Las rutas se ordenan priorizando el índice de seguridad.</p>
+        </div>
+      </div>
+
+      <div class="card">
+
+        <div class="form-grid">
+
+          <div class="input-group">
+            <label for="origin">Origen</label>
+            <input id="origin" value="Campus de Móstoles" placeholder="Selecciona un origen">
+          </div>
+
+          <div class="input-group">
+            <label for="destination">Destino</label>
+            <input id="destination" value="Estación de Móstoles-El Soto" placeholder="Selecciona un destino">
+          </div>
+
+          <div class="input-group">
+            <label for="campus">Campus</label>
+            <select id="campus">
+              <option>Móstoles</option>
+              <option>Alcorcón</option>
+              <option>Fuenlabrada</option>
+              <option>Vicálvaro</option>
+              <option>Aranjuez</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label for="routeTime">Hora prevista</label>
+            <select id="routeTime">
+              <option>Ahora</option>
+              <option>08:00</option>
+              <option>10:00</option>
+              <option>12:00</option>
+              <option>18:00</option>
+              <option>21:00</option>
+            </select>
+          </div>
+
+          <div class="form-full">
+
+            <strong>Preferencias de accesibilidad</strong>
+
+            <label class="checkbox-row">
+              <input type="checkbox" id="avoidStairs" checked>
+              <span>Evitar escaleras</span>
+            </label>
+
+            <label class="checkbox-row">
+              <input type="checkbox">
+              <span>Evitar caminos no accesibles</span>
+            </label>
+
+          </div>
+
+          <div class="form-full">
+
+            <div class="alert-box alert-pre" style="margin-bottom:0">
+              <strong>Horario del servicio</strong>
+              <p style="margin:7px 0 0">
+                Las rutas pueden iniciarse entre las 07:00 y las 23:00.
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+        <button class="primary-btn" onclick="calculateRoutes()">
+          Calcular rutas seguras
+        </button>
+
+      </div>
+
+
+      <div id="routeResults" class="hidden">
+
+        <div class="section-title">Rutas disponibles</div>
+
+        <div class="card">
+
+          <p>
+            Hemos encontrado <strong>3 rutas válidas</strong>.
+            Se muestran ordenadas de mayor a menor índice de seguridad.
+          </p>
+
+          <div class="route-card recommended">
+
+            <div class="route-header">
+              <div>
+                <strong>Ruta recomendada</strong>
+                <div style="color:var(--muted);font-size:13px">
+                  Camino principal del campus
+                </div>
+              </div>
+
+              <span class="security high">
+                Seguridad 92/100
+              </span>
+            </div>
+
+            <div class="route-metrics">
+              <div>
+                <strong>1,8 km</strong>
+                Distancia
+              </div>
+              <div>
+                <strong>23 min</strong>
+                Tiempo estimado
+              </div>
+              <div>
+                <strong>92/100</strong>
+                Índice seguridad
+              </div>
+            </div>
+
+            <div class="route-tags">
+              <span class="tag">💡 Buena iluminación</span>
+              <span class="tag">👥 Alta afluencia</span>
+              <span class="tag">♿ Accesible</span>
+            </div>
+
+            <br>
+
+            <button class="primary-btn" onclick="selectRoute(1)">
+              Seleccionar esta ruta
+            </button>
+
+          </div>
+
+
+          <div class="route-card">
+
+            <div class="route-header">
+              <div>
+                <strong>Ruta alternativa A</strong>
+              </div>
+
+              <span class="security high">
+                Seguridad 86/100
+              </span>
+            </div>
+
+            <div class="route-metrics">
+              <div>
+                <strong>1,5 km</strong>
+                Distancia
+              </div>
+              <div>
+                <strong>19 min</strong>
+                Tiempo estimado
+              </div>
+              <div>
+                <strong>86/100</strong>
+                Índice seguridad
+              </div>
+            </div>
+
+            <div class="route-tags">
+              <span class="tag">💡 Iluminación media</span>
+              <span class="tag">👥 Afluencia media</span>
+            </div>
+
+            <br>
+
+            <button class="outline-btn" onclick="selectRoute(2)">
+              Seleccionar ruta
+            </button>
+
+          </div>
+
+
+          <div class="route-card">
+
+            <div class="route-header">
+              <div>
+                <strong>Ruta alternativa B</strong>
+              </div>
+
+              <span class="security medium">
+                Seguridad 78/100
+              </span>
+            </div>
+
+            <div class="route-metrics">
+              <div>
+                <strong>1,3 km</strong>
+                Distancia
+              </div>
+              <div>
+                <strong>17 min</strong>
+                Tiempo estimado
+              </div>
+              <div>
+                <strong>78/100</strong>
+                Índice seguridad
+              </div>
+            </div>
+
+            <div class="route-tags">
+              <span class="tag">💡 Iluminación media</span>
+              <span class="tag">👥 Baja afluencia</span>
+            </div>
+
+            <br>
+
+            <button class="outline-btn" onclick="selectRoute(3)">
+              Seleccionar ruta
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+
+    <!-- ========================================================
+         TRACKING
+    ========================================================= -->
+
+    <main id="tracking" class="page">
+
+      <div class="page-header">
+        <div>
+          <h2>Ruta activa</h2>
+          <p>Seguimiento de tu recorrido en tiempo real.</p>
+        </div>
+
+        <span class="badge progress">EN CURSO</span>
+      </div>
+
+      <div class="alert-box alert-pre">
+        <strong>Seguimiento activo</strong>
+        <p>
+          Tu posición se utiliza para detectar desviaciones y gestionar
+          las alertas de seguridad durante el trayecto.
+        </p>
+      </div>
+
+      <div class="grid grid-2">
+
+        <div class="card">
+
+          <div class="map-container" style="height:400px">
+
+            <div class="map-road road1"></div>
+            <div class="map-road road2"></div>
+            <div class="map-road road3"></div>
+
+            <div class="route-line"></div>
+
+            <div class="map-point origin-point"></div>
+            <div class="map-point destination-point"></div>
+
+            <div class="map-label origin-label">Salida</div>
+            <div class="map-label destination-label">Destino</div>
+
+          </div>
+
+        </div>
+
+
+        <div>
+
+          <div class="card">
+
+            <h3>Información del trayecto</h3>
+
+            <div class="route-metrics">
+
+              <div>
+                <strong>0,9 km</strong>
+                Recorridos
+              </div>
+
+              <div>
+                <strong>11 min</strong>
+                Tiempo
+              </div>
+
+              <div>
+                <strong>0,9 km</strong>
+                Restantes
+              </div>
+
+            </div>
+
+            <div class="progress">
+              <div class="progress-bar" style="width:52%"></div>
+            </div>
+
+            <p>
+              <strong>Destino:</strong>
+              Estación de Móstoles-El Soto
+            </p>
+
+            <p>
+              <strong>Seguridad:</strong>
+              <span class="security high">92/100</span>
+            </p>
+
+          </div>
+
+
+          <div class="card" style="margin-top:18px">
+
+            <h3>Acciones</h3>
+
+            <button class="outline-btn full" onclick="newRoute()">
+              🔄 Solicitar nueva ruta
+            </button>
+
+            <br><br>
+
+            <button class="danger-btn full" onclick="navigate('incident')">
+              ⚠️ Registrar incidencia
+            </button>
+
+            <br><br>
+
+            <button class="secondary-btn full" onclick="confirmArrival()">
+              ✓ He llegado al destino
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+
+    <!-- ========================================================
+         HISTORY
+    ========================================================= -->
+
+    <main id="history" class="page">
+
+      <div class="page-header">
+        <div>
+          <h2>Historial de rutas</h2>
+          <p>Consulta los trayectos realizados anteriormente.</p>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Origen</th>
+              <th>Destino</th>
+              <th>Distancia</th>
+              <th>Seguridad</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            <tr>
+              <td>28/08/2026 · 18:12</td>
+              <td>Campus Móstoles</td>
+              <td>Estación El Soto</td>
+              <td>1,8 km</td>
+              <td>92/100</td>
+              <td><span class="badge resolved">Completada</span></td>
+            </tr>
+
+            <tr>
+              <td>27/08/2026 · 09:04</td>
+              <td>Estación El Soto</td>
+              <td>Campus Móstoles</td>
+              <td>2,0 km</td>
+              <td>89/100</td>
+              <td><span class="badge resolved">Completada</span></td>
+            </tr>
+
+            <tr>
+              <td>25/08/2026 · 20:10</td>
+              <td>Biblioteca</td>
+              <td>Residencia</td>
+              <td>1,4 km</td>
+              <td>84/100</td>
+              <td><span class="badge resolved">Completada</span></td>
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <div class="alert-box alert-pre" style="margin-top:20px">
+        <strong>Privacidad</strong>
+        <p>
+          La información personal de localización se elimina al finalizar
+          una ruta salvo que exista una base legal o consentimiento que
+          permita conservarla.
+        </p>
+      </div>
+
+    </main>
+
+
+    <!-- ========================================================
+         ALERTS
+    ========================================================= -->
+
+    <main id="alerts" class="page">
+
+      <div class="page-header">
+        <div>
+          <h2>Alertas de seguridad</h2>
+          <p>Gestiona las alertas relacionadas con tu ruta activa.</p>
+        </div>
+      </div>
+
+      <div id="preAlert" class="alert-box alert-pre">
+
+        <h3>⚠️ Prealerta de seguridad</h3>
+
+        <p>
+          Se ha detectado una condición que puede requerir una alerta.
+          Si todo está bien, puedes cancelar la alerta.
+        </p>
+
+        <div class="countdown" id="countdown">30</div>
+
+        <div style="display:flex;gap:10px">
+
+          <button class="secondary-btn full" onclick="cancelPreAlert()">
+            Estoy bien · Cancelar
+          </button>
+
+          <button class="danger-btn full" onclick="activateAlert()">
+            Activar alerta ahora
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div id="activeAlert" class="alert-box alert-active hidden">
+
+        <h3>🚨 ALERTA ACTIVA</h3>
+
+        <p>
+          La alerta ha sido activada y se ha iniciado la notificación
+          a tus contactos de confianza.
+        </p>
+
+        <p>
+          <strong>Estado:</strong> Notificando contactos...
+        </p>
+
+        <button class="danger-btn full" onclick="cancelActiveAlert()">
+          Cancelar alerta
+        </button>
+
+      </div>
+
+
+      <div class="card">
+
+        <h3>Configuración de alertas</h3>
+
+        <div class="input-group">
+          <label for="alertTimeout">
+            Tiempo de confirmación de prealerta
+          </label>
+
+          <select id="alertTimeout">
+            <option>30 segundos</option>
+            <option>45 segundos</option>
+            <option>60 segundos</option>
+            <option>90 segundos</option>
+          </select>
+        </div>
+
+        <button class="primary-btn" onclick="saveAlertSettings()">
+          Guardar configuración
+        </button>
+
+      </div>
+
+    </main>
+
+
+    <!-- ========================================================
+         CONTACTS
+    ========================================================= -->
+
+    <main id="contacts" class="page">
+
+      <div class="page-header">
+
+        <div>
+          <h2>Contactos de confianza</h2>
+          <p>
+            Personas de la comunidad universitaria que recibirán
+            notificaciones de alerta.
+          </p>
+        </div>
+
+        <button class="primary-btn" onclick="openModal('addContactModal')">
+          + Añadir contacto
+        </button>
+
+      </div>
+
+
+      <div class="grid grid-2">
+
+        <div class="card">
+
+          <div style="display:flex;justify-content:space-between">
+            <div>
+              <h3>María García</h3>
+              <p>maria.garcia@urjc.es</p>
+            </div>
+
+            <span class="badge resolved">Verificado</span>
+          </div>
+
+          <p>
+            Recibirá una notificación cuando se active una alerta.
+          </p>
+
+          <button class="danger-btn" onclick="removeContact(this)">
+            Eliminar
+          </button>
+
+        </div>
+
+
+        <div class="card">
+
+          <div style="display:flex;justify-content:space-between">
+            <div>
+              <h3>Daniel López</h3>
+              <p>daniel.lopez@urjc.es</p>
+            </div>
+
+            <span class="badge resolved">Verificado</span>
+          </div>
+
+          <p>
+            Recibirá una notificación cuando se active una alerta.
+          </p>
+
+          <button class="danger-btn" onclick="removeContact(this)">
+            Eliminar
+          </button>
+
+        </div>
+
+      </div>
+
+      <div class="alert-box alert-pre" style="margin-top:20px">
+        <strong>Importante</strong>
+        <p>
+          Los contactos de confianza deben pertenecer a la comunidad
+          universitaria y poder acceder a Senda URJC.
+          La comunicación posterior se realizará fuera de la aplicación.
+        </p>
+      </div>
+
+    </main>
+
+
+    <!-- ========================================================
+         INCIDENT USER
+    ========================================================= -->
+
+    <main id="incident" class="page">
+
+      <div class="page-header">
+
+        <div>
+          <h2>Registrar incidencia</h2>
+          <p>
+            Comunica un problema relacionado con una ruta o zona.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="card">
+
+        <div class="form-grid">
+
+          <div class="input-group">
+            <label>Tipo de incidencia</label>
+
+            <select>
+              <option>Iluminación deficiente</option>
+              <option>Camino bloqueado</option>
+              <option>Zona insegura</option>
+              <option>Problema de accesibilidad</option>
+              <option>Otra</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label>Gravedad</label>
+
+            <select>
+              <option>Media</option>
+              <option>Grave</option>
+            </select>
+          </div>
+
+          <div class="input-group form-full">
+            <label>Zona afectada</label>
+            <input value="Camino entre edificio principal y estación">
+          </div>
+
+          <div class="input-group form-full">
+            <label>Descripción</label>
+
+            <textarea rows="5"
+              placeholder="Describe la incidencia con el mayor detalle posible"></textarea>
+          </div>
+
+        </div>
+
+        <div class="alert-box alert-pre">
+          <strong>Ubicación</strong>
+          <p>
+            El sistema registrará la zona necesaria para que los
+            administradores puedan revisar la incidencia.
+          </p>
+        </div>
+
+        <button class="primary-btn" onclick="submitIncident()">
+          Registrar incidencia
+        </button>
+
+      </div>
+
+    </main>
+
+
+    <!-- ========================================================
+         VOLUNTEER
+    ========================================================= -->
+
+    <main id="volunteer" class="page">
+
+      <div class="page-header">
+
+        <div>
+          <h2>Acompañamiento presencial</h2>
+          <p>
+            Solicita o gestiona acompañamientos durante tus trayectos.
+          </p>
+        </div>
+
+      </div>
+
+
+      <div class="grid grid-2">
+
+        <div class="card">
+
+          <h3>Solicitar acompañamiento</h3>
+
+          <p>
+            Un voluntario disponible podrá acompañarte presencialmente
+            durante el trayecto.
+          </p>
+
+          <div class="input-group">
+            <label>Ruta</label>
+            <select>
+              <option>Campus Móstoles → Estación El Soto</option>
+              <option>Biblioteca → Residencia</option>
+            </select>
+          </div>
+
+          <button class="primary-btn" onclick="requestVolunteer()">
+            Solicitar acompañamiento
+          </button>
+
+        </div>
+
+
+        <div class="card">
+
+          <h3>Mi condición de voluntario</h3>
+
+          <p>
+            Puedes indicar si deseas recibir solicitudes de
+            acompañamiento presencial.
+          </p>
+
+          <label class="checkbox-row">
+            <input type="checkbox" id="volunteerStatus" onchange="toggleVolunteer()">
+            <span>Estoy disponible como voluntario</span>
+          </label>
+
+          <button class="outline-btn" onclick="openModal('availabilityModal')">
+            Configurar disponibilidad
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div class="section-title">Solicitud actual</div>
+
+      <div id="volunteerRequest" class="card">
+
+        <strong>Sin solicitudes pendientes</strong>
+
+        <p style="color:var(--muted)">
+          Cuando exista una solicitud compatible aparecerá aquí.
+        </p>
+
+      </div>
+
+    </main>
+
+
+    <!-- ========================================================
+         PROFILE
+    ========================================================= -->
+
+    <main id="profile" class="page">
+
+      <div class="page-header">
+
+        <div>
+          <h2>Perfil y preferencias</h2>
+          <p>Configura tus preferencias de uso y accesibilidad.</p>
+        </div>
+
+      </div>
+
+      <div class="grid grid-2">
+
+        <div class="card">
+
+          <h3>Información institucional</h3>
+
+          <div class="input-group">
+            <label>Nombre</label>
+            <input value="Estudiante Demo">
+          </div>
+
+          <div class="input-group">
+            <label>Correo institucional</label>
+            <input value="alex@urjc.es" disabled>
+          </div>
+
+          <div class="input-group">
+            <label>Idioma</label>
+
+            <select onchange="changeLanguage(this.value)">
+              <option value="es">Español</option>
+              <option value="en">English</option>
+              <option value="zh">中文</option>
+            </select>
+          </div>
+
+          <button class="primary-btn" onclick="saveProfile()">
+            Guardar cambios
+          </button>
+
+        </div>
+
+
+        <div class="card">
+
+          <h3>Necesidades de movilidad</h3>
+
+          <p>
+            Estas preferencias se utilizarán para excluir rutas
+            incompatibles cuando existan alternativas.
+          </p>
+
+          <label class="checkbox-row">
+            <input type="checkbox" checked>
+            <span>Necesito evitar escaleras</span>
+          </label>
+
+          <label class="checkbox-row">
+            <input type="checkbox">
+            <span>Necesito rutas accesibles para silla de ruedas</span>
+          </label>
+
+          <label class="checkbox-row">
+            <input type="checkbox">
+            <span>Necesito minimizar pendientes pronunciadas</span>
+          </label>
+
+        </div>
+
+
+        <div class="card">
+
+          <h3>Alertas</h3>
+
+          <div class="input-group">
+            <label>Confirmación de prealerta</label>
+
+            <select>
+              <option>30 segundos</option>
+              <option>45 segundos</option>
+              <option>60 segundos</option>
+              <option>90 segundos</option>
+            </select>
+          </div>
+
+          <label class="checkbox-row">
+            <input type="checkbox" checked>
+            <span>Vibración para prealertas</span>
+          </label>
+
+        </div>
+
+
+        <div class="card">
+
+          <h3>Accesibilidad</h3>
+
+          <div class="input-group">
+
+            <label>Tamaño del texto</label>
+
+            <input
+              type="range"
+              min="14"
+              max="22"
+              value="16"
+              oninput="setFontSize(this.value)"
+              style="width:100%"
+            >
+
+          </div>
+
+          <p>
+            La aplicación también respeta las funciones de accesibilidad
+            proporcionadas por el sistema operativo.
+          </p>
+
+        </div>
+
+      </div>
+
+    </main>
+
+
+    <!-- ========================================================
+         ADMIN DASHBOARD
+    ========================================================= -->
+
+    <main id="admin" class="page">
+
+      <div class="page-header">
+
+        <div>
+          <h2>Panel administrativo</h2>
+          <p>Gestión de seguridad y operación de Senda URJC.</p>
+        </div>
+
+        <span class="badge resolved">Administrador autorizado</span>
+
+      </div>
+
+
+      <div class="grid grid-4">
+
+        <div class="card stat">
+
+          <div>
+            <div class="stat-label">Incidencias abiertas</div>
+            <div class="stat-number">8</div>
+          </div>
+
+          <div class="stat-icon">⚠️</div>
+
+        </div>
+
+
+        <div class="card stat">
+
+          <div>
+            <div class="stat-label">Usuarios activos hoy</div>
+            <div class="stat-number">1.284</div>
+          </div>
+
+          <div class="stat-icon">👥</div>
+
+        </div>
+
+
+        <div class="card stat">
+
+          <div>
+            <div class="stat-label">Trayectos hoy</div>
+            <div class="stat-number">3.721</div>
+          </div>
+
+          <div class="stat-icon">🧭</div>
+
+        </div>
+
+
+        <div class="card stat">
+
+          <div>
+            <div class="stat-label">Disponibilidad</div>
+            <div class="stat-number">99,8%</div>
+          </div>
+
+          <div class="stat-icon">✓</div>
+
+        </div>
+
+      </div>
+
+
+      <div class="section-title">Estado del sistema</div>
+
+      <div class="grid grid-3">
+
+        <div class="card">
+
+          <h3>🟢 Servicio de rutas</h3>
+
+          <p>Operativo</p>
+
+          <div class="progress">
+            <div class="progress-bar" style="width:99%"></div>
+          </div>
+
+        </div>
+
+
+        <div class="card">
+
+          <h3>🟢 Lumen Smart</h3>
+
+          <p>Datos disponibles</p>
+
+          <div class="progress">
+            <div class="progress-bar" style="width:96%"></div>
+          </div>
+
+        </div>
+
+
+        <div class="card">
+
+          <h3>🟢 LDAP / SSO</h3>
+
+          <p>Operativo</p>
+
+          <div class="progress">
+            <div class="progress-bar" style="width:100%"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="section-title">Acciones administrativas</div>
+
+      <div class="grid grid-3">
+
+        <div class="card">
+
+          <h3>Incidencias</h3>
+          <p>Consultar y gestionar las incidencias registradas.</p>
+
+          <button class="primary-btn" onclick="navigate('adminIncidents')">
+            Gestionar incidencias
+          </button>
+
+        </div>
+
+
+        <div class="card">
+
+          <h3>Parámetros de seguridad</h3>
+          <p>Configurar el algoritmo por campus, día y franja horaria.</p>
+
+          <button class="primary-btn" onclick="navigate('securityConfig')">
+            Configurar seguridad
+          </button>
+
+        </div>
+
+
+        <div class="card">
+
+          <h3>Estadísticas</h3>
+          <p>Consultar el uso del sistema y los trayectos.</p>
+
+          <button class="primary-btn" onclick="navigate('statistics')">
+            Ver estadísticas
+          </button>
+
+        </div>
+
+      </div>
+
+    </main>
+
+
+    <!-- ========================================================
+         ADMIN INCIDENTS
+    ========================================================= -->
+
+    <main id="adminIncidents" class="page">
+
+      <div class="page-header">
+
+        <div>
+          <h2>Gestión de incidencias</h2>
+          <p>Consulta y actualiza las incidencias registradas.</p>
+        </div>
+
+      </div>
+
+
+      <div class="card" style="margin-bottom:20px">
+
+        <div class="form-grid">
+
+          <div class="input-group">
+            <label>Estado</label>
+
+            <select>
+              <option>Todos</option>
+              <option>Abierta</option>
+              <option>En curso</option>
+              <option>Resuelta</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label>Gravedad</label>
+
+            <select>
+              <option>Todas</option>
+              <option>Grave</option>
+              <option>Media</option>
+            </select>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+
+            <tr>
+              <th>ID</th>
+              <th>Zona</th>
+              <th>Tipo</th>
+              <th>Gravedad</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th>Acción</th>
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            <tr>
+              <td>INC-0248</td>
+              <td>Camino norte</td>
+              <td>Iluminación</td>
+              <td><span class="badge high">Grave</span></td>
+              <td>
+                <select onchange="updateIncident(this)">
+                  <option>Abierta</option>
+                  <option>En curso</option>
+                  <option>Resuelta</option>
+                </select>
+              </td>
+              <td>28/08/2026</td>
+              <td>
+                <button class="outline-btn" onclick="reviewIncident('INC-0248')">
+                  Revisar
+                </button>
+              </td>
+            </tr>
+
+
+            <tr>
+              <td>INC-0247</td>
+              <td>Edificio A</td>
+              <td>Accesibilidad</td>
+              <td><span class="badge open">Media</span></td>
+              <td>
+                <select onchange="updateIncident(this)">
+                  <option>En curso</option>
+                  <option>Abierta</option>
+                  <option>Resuelta</option>
+                </select>
+              </td>
+              <td>27/08/2026</td>
+              <td>
+                <button class="outline-btn" onclick="reviewIncident('INC-0247')">
+                  Revisar
+                </button>
+              </td>
+            </tr>
+
+
+            <tr>
+              <td>INC-0246</td>
+              <td>Acceso oeste</td>
+              <td>Camino bloqueado</td>
+              <td><span class="badge open">Media</span></td>
+              <td>
+                <select onchange="updateIncident(this)">
+                  <option>Resuelta</option>
+                  <option>Abierta</option>
+                  <option>En curso</option>
+                </select>
+              </td>
+              <td>26/08/2026</td>
+              <td>
+                <button class="outline-btn" onclick="reviewIncident('INC-0246')">
+                  Revisar
+                </button>
+              </td>
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </main>
+
+
+    <!-- ========================================================
+         SECURITY CONFIG
+    ========================================================= -->
+
+    <main id="securityConfig" class="page">
+
+      <div class="page-header">
+
+        <div>
+          <h2>Configuración del índice de seguridad</h2>
+          <p>
+            Parámetros utilizados por el algoritmo de cálculo.
+          </p>
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="form-grid">
+
+          <div class="input-group">
+            <label>Campus</label>
+
+            <select>
+              <option>Móstoles</option>
+              <option>Alcorcón</option>
+              <option>Fuenlabrada</option>
+              <option>Vicálvaro</option>
+              <option>Aranjuez</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label>Día de la semana</label>
+
+            <select>
+              <option>Todos los días</option>
+              <option>Lunes</option>
+              <option>Martes</option>
+              <option>Miércoles</option>
+              <option>Jueves</option>
+              <option>Viernes</option>
+              <option>Sábado</option>
+              <option>Domingo</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label>Franja horaria</label>
+
+            <select>
+              <option>07:00 – 10:00</option>
+              <option>10:00 – 14:00</option>
+              <option>14:00 – 18:00</option>
+              <option>18:00 – 23:00</option>
+            </select>
+          </div>
+
+        </div>
+
+
+        <h3 style="margin-top:20px">Pesos del algoritmo</h3>
+
+        <div class="input-group">
+
+          <label>
+            Iluminación:
+            <strong id="lightValue">40%</strong>
+          </label>
+
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value="40"
+            oninput="updateWeight('lightValue',this.value)"
+            style="width:100%"
+          >
+
+        </div>
+
+
+        <div class="input-group">
+
+          <label>
+            Afluencia:
+            <strong id="peopleValue">35%</strong>
+          </label>
+
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value="35"
+            oninput="updateWeight('peopleValue',this.value)"
+            style="width:100%"
+          >
+
+        </div>
+
+
+        <div class="input-group">
+
+          <label>
+            Estado del entorno:
+            <strong id="environmentValue">25%</strong>
+          </label>
+
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value="25"
+            oninput="updateWeight('environmentValue',this.value)"
+            style="width:100%"
+          >
+
+        </div>
+
+
+        <div class="alert-box alert-pre">
+          <strong>Datos de Lumen Smart</strong>
+          <p>
+            Última actualización: hace 18 segundos.
+            Iluminación y afluencia disponibles.
+          </p>
+        </div>
+
+
+        <button class="primary-btn" onclick="saveSecurityConfig()">
+          Guardar parámetros
+        </button>
+
+      </div>
+
+
+      <div class="card" style="margin-top:18px">
+
+        <h3>Excepción manual de zona</h3>
+
+        <p>
+          Permite modificar el nivel de seguridad de una zona después
+          de revisar una incidencia.
+        </p>
+
+        <div class="form-grid">
+
+          <div class="input-group">
+            <label>Zona</label>
+            <input value="Camino norte">
+          </div>
+
+          <div class="input-group">
+            <label>Nivel manual</label>
+
+            <select>
+              <option>Muy bajo</option>
+              <option>Bajo</option>
+              <option>Medio</option>
+              <option>Alto</option>
+              <option>Muy alto</option>
+            </select>
+
+          </div>
+
+        </div>
+
+        <label class="checkbox-row">
+          <input type="checkbox">
+          <span>Retirar el efecto de la incidencia sobre esta zona</span>
+        </label>
+
+        <button class="secondary-btn" onclick="saveManualSecurity()">
+          Aplicar modificación
+        </button>
+
+      </div>
+
+    </main>
+
+
+    <!-- ========================================================
+         STATISTICS
+    ========================================================= -->
+
+    <main id="statistics" class="page">
+
+      <div class="page-header">
+
+        <div>
+          <h2>Estadísticas</h2>
+          <p>Información agregada y anonimizada del uso de Senda URJC.</p>
+        </div>
+
+      </div>
+
+
+      <div class="grid grid-4">
+
+        <div class="card stat">
+
+          <div>
+            <div class="stat-label">Usuarios</div>
+            <div class="stat-number">8.642</div>
+          </div>
+
+          <div class="stat-icon">👥</div>
+
+        </div>
+
+        <div class="card stat">
+
+          <div>
+            <div class="stat-label">Trayectos</div>
+            <div class="stat-number">27.491</div>
+          </div>
+
+          <div class="stat-icon">🧭</div>
+
+        </div>
+
+        <div class="card stat">
+
+          <div>
+            <div class="stat-label">Incidencias</div>
+            <div class="stat-number">183</div>
+          </div>
+
+          <div class="stat-icon">⚠️</div>
+
+        </div>
+
+        <div class="card stat">
+
+          <div>
+            <div class="stat-label">Seguridad media</div>
+            <div class="stat-number">87/100</div>
+          </div>
+
+          <div class="stat-icon">🛡️</div>
+
+        </div>
+
+      </div>
+
+
+      <div class="section-title">Uso por campus</div>
+
+      <div class="card">
+
+        <div style="margin-bottom:18px">
+          <div style="display:flex;justify-content:space-between">
+            <strong>Móstoles</strong>
+            <span>8.940 trayectos</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" style="width:82%"></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:18px">
+          <div style="display:flex;justify-content:space-between">
+            <strong>Fuenlabrada</strong>
+            <span>6.120 trayectos</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" style="width:64%"></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:18px">
+          <div style="display:flex;justify-content:space-between">
+            <strong>Vicálvaro</strong>
+            <span>5.830 trayectos</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" style="width:58%"></div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between">
+            <strong>Alcorcón</strong>
+            <span>4.720 trayectos</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" style="width:47%"></div>
+          </div>
+        </div>
+
+      </div>
+
+
+      <div class="section-title">Incidencias</div>
+
+      <div class="grid grid-3">
+
+        <div class="card">
+          <h3>Iluminación</h3>
+          <div class="stat-number">74</div>
+          <p>40,4% de las incidencias</p>
+        </div>
+
+        <div class="card">
+          <h3>Accesibilidad</h3>
+          <div class="stat-number">43</div>
+          <p>23,5% de las incidencias</p>
+        </div>
+
+        <div class="card">
+          <h3>Estado del entorno</h3>
+          <div class="stat-number">66</div>
+          <p>36,1% de las incidencias</p>
+        </div>
+
+      </div>
+
+
+      <div class="section-title">Mapa de calor de solicitudes</div>
+
+      <div class="card">
+
+        <div class="heatmap">
+
+          <div class="heat h1"></div>
+          <div class="heat h2"></div>
+          <div class="heat h3"></div>
+          <div class="heat h4"></div>
+
+          <div class="map-road road1"></div>
+          <div class="map-road road2"></div>
+          <div class="map-road road3"></div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+
+    <!-- ========================================================
+         REPORTS
+    ========================================================= -->
+
+    <main id="reports" class="page">
+
+      <div class="page-header">
+
+        <div>
+          <h2>Informes</h2>
+          <p>Generación de informes administrativos.</p>
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="form-grid">
+
+          <div class="input-group">
+            <label>Tipo de informe</label>
+
+            <select id="reportType">
+              <option>Uso de la aplicación</option>
+              <option>Incidencias</option>
+              <option>Seguridad por campus</option>
+              <option>Trayectos realizados</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label>Periodo</label>
+
+            <select>
+              <option>Últimos 7 días</option>
+              <option>Últimos 30 días</option>
+              <option>Este semestre</option>
+              <option>Curso académico</option>
+            </select>
+          </div>
+
+        </div>
+
+        <button class="primary-btn" onclick="generateReport()">
+          Generar informe
+        </button>
+
+      </div>
+
+
+      <div id="reportResult" class="card hidden" style="margin-top:20px">
+
+        <h3>Informe generado</h3>
+
+        <p>
+          El informe de ejemplo contiene datos agregados y anonimizados.
+        </p>
+
+        <div class="grid grid-3">
+
+          <div>
+            <strong>27.491</strong>
+            <p>Trayectos</p>
+          </div>
+
+          <div>
+            <strong>8.642</strong>
+            <p>Usuarios</p>
+          </div>
+
+          <div>
+            <strong>183</strong>
+            <p>Incidencias</p>
+          </div>
+
+        </div>
+
+        <button class="outline-btn" onclick="showToast('Informe descargado en modo prototipo')">
+          Descargar informe
+        </button>
+
+      </div>
+
+    </main>
+
+  </section>
+
+</div>
+
+
+<!-- ============================================================
+     MODALS
+============================================================ -->
+
+<div id="addContactModal" class="modal-overlay">
+
+  <div class="modal">
+
+    <div class="modal-header">
+      <h2>Añadir contacto</h2>
+      <button class="close" onclick="closeModal('addContactModal')">×</button>
+    </div>
+
+    <p>
+      Introduce una cuenta institucional perteneciente a la comunidad URJC.
+    </p>
+
+    <div class="input-group">
+      <label>Correo institucional</label>
+      <input placeholder="persona@urjc.es">
+    </div>
+
+    <button class="primary-btn full" onclick="addContact()">
+      Verificar y añadir
+    </button>
+
+  </div>
+
+</div>
+
+
+<div id="availabilityModal" class="modal-overlay">
+
+  <div class="modal">
+
+    <div class="modal-header">
+      <h2>Disponibilidad</h2>
+      <button class="close" onclick="closeModal('availabilityModal')">×</button>
+    </div>
+
+    <p>
+      Indica cuándo estás disponible para acompañamientos presenciales.
+    </p>
+
+    <div class="input-group">
+      <label>Día</label>
+      <select>
+        <option>Lunes</option>
+        <option>Martes</option>
+        <option>Miércoles</option>
+        <option>Jueves</option>
+        <option>Viernes</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label>Horario</label>
+      <select>
+        <option>08:00 – 12:00</option>
+        <option>12:00 – 16:00</option>
+        <option>16:00 – 20:00</option>
+        <option>20:00 – 23:00</option>
+      </select>
+    </div>
+
+    <button class="primary-btn full" onclick="saveAvailability()">
+      Guardar disponibilidad
+    </button>
+
+  </div>
+
+</div>
+
+
+<div id="privacyModal" class="modal-overlay">
+
+  <div class="modal">
+
+    <div class="modal-header">
+      <h2>Privacidad</h2>
+      <button class="close" onclick="closeModal('privacyModal')">×</button>
+    </div>
+
+    <h3>Datos de localización</h3>
+
+    <p>
+      La posición del usuario se utiliza durante una ruta activa para
+      realizar el seguimiento y detectar posibles desviaciones.
+    </p>
+
+    <p>
+      Al finalizar una ruta, los datos personales de localización se
+      eliminan conforme a la política de conservación aplicable.
+    </p>
+
+    <h3>Estadísticas</h3>
+
+    <p>
+      Las estadísticas conservadas después de finalizar una ruta se
+      mantienen de forma anonimizada.
+    </p>
+
+    <h3>Servicios externos</h3>
+
+    <p>
+      La aplicación puede utilizar servicios institucionales y de
+      infraestructura necesarios para autenticación, cartografía y
+      cálculo de seguridad.
+    </p>
+
+    <button class="primary-btn full" onclick="closeModal('privacyModal')">
+      Entendido
+    </button>
+
+  </div>
+
+</div>
+
+
+<div id="incidentReviewModal" class="modal-overlay">
+
+  <div class="modal">
+
+    <div class="modal-header">
+      <h2>Revisión de incidencia</h2>
+      <button class="close" onclick="closeModal('incidentReviewModal')">×</button>
+    </div>
+
+    <p id="reviewIncidentId"><strong>INC-0248</strong></p>
+
+    <div class="alert-box alert-pre">
+
+      <strong>Zona afectada: Camino norte</strong>
+
+      <p>
+        Se ha registrado iluminación insuficiente durante horario nocturno.
+      </p>
+
+    </div>
+
+    <div class="input-group">
+
+      <label>Efecto sobre seguridad</label>
+
+      <select>
+        <option>Reducir seguridad</option>
+        <option>Sin efecto</option>
+        <option>Aumentar seguridad</option>
+      </select>
+
+    </div>
+
+    <label class="checkbox-row">
+      <input type="checkbox">
+      <span>Retirar el efecto actual de esta incidencia</span>
+    </label>
+
+    <button class="primary-btn full" onclick="saveIncidentReview()">
+      Guardar revisión
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- TOAST -->
+
+<div id="toast" class="toast"></div>
+
+
+<script>
+/* ============================================================
+   STATE
+============================================================ */
+
+let currentPage = "home";
+let isAdmin = false;
+let countdownValue = 30;
+let countdownTimer = null;
+
+
+/* ============================================================
+   LOGIN / LOGOUT
+============================================================ */
+
+function login(){
+
+  const user =
+    document.getElementById("loginUser").value.trim()
+    || "usuario@urjc.es";
+
+  isAdmin = user.toLowerCase().includes("admin");
+
+  enterApp(user);
+}
+
+
+function demoLogin(user){
+
+  isAdmin = user.toLowerCase().includes("admin");
+
+  enterApp(user);
+}
+
+
+function enterApp(user){
+
+  document.getElementById("loginScreen").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+
+  document.getElementById("topUser").textContent =
+    isAdmin ? "Administrador URJC" : "Estudiante Demo";
+
+  document.getElementById("avatar").textContent =
+    isAdmin ? "A" : "A";
+
+  document.getElementById("adminNav").style.display =
+    isAdmin ? "block" : "none";
+
+  navigate(isAdmin ? "admin" : "home");
+
+  showToast(
+    isAdmin
+      ? "Sesión administrativa iniciada"
+      : "Sesión institucional iniciada"
+  );
+}
+
+
+function logout(){
+
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("loginScreen").classList.remove("hidden");
+
+  document.getElementById("loginUser").value = "";
+
+  isAdmin = false;
+}
+
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+
+const pageTitles = {
+
+  home:"Inicio",
+  routes:"Solicitar ruta",
+  tracking:"Ruta activa",
+  history:"Historial",
+  alerts:"Alertas",
+  contacts:"Contactos de confianza",
+  incident:"Registrar incidencia",
+  volunteer:"Voluntariado",
+  profile:"Perfil y preferencias",
+  admin:"Panel administrativo",
+  adminIncidents:"Gestión de incidencias",
+  securityConfig:"Configuración de seguridad",
+  statistics:"Estadísticas",
+  reports:"Informes"
+
+};
+
+
+function navigate(page){
+
+  if(
+    ["admin","adminIncidents","securityConfig","statistics","reports"]
+    .includes(page)
+    && !isAdmin
+  ){
+    showToast("No tienes permisos para acceder a esta sección.");
+    return;
+  }
+
+  document.querySelectorAll(".page").forEach(
+    p => p.classList.remove("active")
+  );
+
+  const target = document.getElementById(page);
+
+  if(!target) return;
+
+  target.classList.add("active");
+
+  currentPage = page;
+
+  document.getElementById("pageTitle").textContent =
+    pageTitles[page] || "Senda URJC";
+
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.classList.remove("active");
+
+    if(btn.dataset.page === page){
+      btn.classList.add("active");
+    }
+  });
+
+  document.getElementById("sidebar").classList.remove("open");
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+}
+
+
+function toggleSidebar(){
+
+  document.getElementById("sidebar").classList.toggle("open");
+
+}
+
+
+/* ============================================================
+   ROUTES
+============================================================ */
+
+function calculateRoutes(){
+
+  const origin =
+    document.getElementById("origin").value.trim();
+
+  const destination =
+    document.getElementById("destination").value.trim();
+
+  if(!origin || !destination){
+
+    showToast("Selecciona un origen y un destino.");
+
+    return;
+  }
+
+  document
+    .getElementById("routeResults")
+    .classList.remove("hidden");
+
+  showToast("3 rutas válidas encontradas.");
+}
+
+
+function selectRoute(number){
+
+  showToast(
+    "Ruta " + number + " seleccionada. Seguimiento iniciado."
+  );
+
+  navigate("tracking");
+}
+
+
+function newRoute(){
+
+  showToast("Puedes seleccionar un nuevo origen y destino.");
+
+  navigate("routes");
+}
+
+
+function confirmArrival(){
+
+  if(
+    confirm(
+      "¿Confirmas que has llegado correctamente al destino?"
+    )
+  ){
+
+    showToast(
+      "Ruta finalizada. El seguimiento ha terminado."
+    );
+
+    navigate("history");
+  }
+}
+
+
+/* ============================================================
+   ALERTS
+============================================================ */
+
+function startCountdown(){
+
+  countdownValue = 30;
+
+  clearInterval(countdownTimer);
+
+  countdownTimer = setInterval(() => {
+
+    countdownValue--;
+
+    const element =
+      document.getElementById("countdown");
+
+    if(element){
+      element.textContent = countdownValue;
+    }
+
+    if(countdownValue <= 0){
+
+      clearInterval(countdownTimer);
+
+      activateAlert();
+    }
+
+  },1000);
+}
+
+
+function cancelPreAlert(){
+
+  clearInterval(countdownTimer);
+
+  document
+    .getElementById("preAlert")
+    .classList.add("hidden");
+
+  showToast(
+    "Prealerta cancelada. No se ha activado ninguna alerta."
+  );
+}
+
+
+function activateAlert(){
+
+  clearInterval(countdownTimer);
+
+  document
+    .getElementById("preAlert")
+    .classList.add("hidden");
+
+  document
+    .getElementById("activeAlert")
+    .classList.remove("hidden");
+
+  showToast(
+    "Alerta activada. Contactos de confianza notificados."
+  );
+}
+
+
+function cancelActiveAlert(){
+
+  document
+    .getElementById("activeAlert")
+    .classList.add("hidden");
+
+  document
+    .getElementById("preAlert")
+    .classList.remove("hidden");
+
+  document.getElementById("countdown").textContent = "30";
+
+  showToast(
+    "Alerta cancelada. Se ha notificado la cancelación."
+  );
+}
+
+
+function saveAlertSettings(){
+
+  const value =
+    document.getElementById("alertTimeout").value;
+
+  showToast(
+    "Configuración guardada: " + value
+  );
+}
+
+
+/* ============================================================
+   CONTACTS
+============================================================ */
+
+function removeContact(button){
+
+  if(
+    confirm("¿Quieres eliminar este contacto de confianza?")
+  ){
+
+    const card =
+      button.closest(".card");
+
+    card.remove();
+
+    showToast("Contacto eliminado.");
+  }
+}
+
+
+function addContact(){
+
+  closeModal("addContactModal");
+
+  showToast(
+    "Contacto verificado y añadido correctamente."
+  );
+}
+
+
+/* ============================================================
+   INCIDENTS
+============================================================ */
+
+function submitIncident(){
+
+  showToast(
+    "Incidencia registrada correctamente."
+  );
+
+  setTimeout(
+    () => navigate("home"),
+    700
+  );
+}
+
+
+function updateIncident(select){
+
+  showToast(
+    "Estado actualizado a: " + select.value
+  );
+}
+
+
+function reviewIncident(id){
+
+  document
+    .getElementById("reviewIncidentId")
+    .innerHTML =
+      "<strong>" + id + "</strong>";
+
+  openModal("incidentReviewModal");
+}
+
+
+function saveIncidentReview(){
+
+  closeModal("incidentReviewModal");
+
+  showToast(
+    "Revisión guardada. El nivel de seguridad de la zona ha sido actualizado."
+  );
+}
+
+
+/* ============================================================
+   VOLUNTEERING
+============================================================ */
+
+function requestVolunteer(){
+
+  document
+    .getElementById("volunteerRequest")
+    .innerHTML = `
+      <strong>Solicitud enviada</strong>
+      <p>
+        Se ha enviado tu solicitud a los voluntarios que cumplen
+        las condiciones de disponibilidad.
+      </p>
+      <span class="badge progress">Buscando voluntario</span>
+    `;
+
+  showToast(
+    "Solicitud de acompañamiento enviada."
+  );
+}
+
+
+function toggleVolunteer(){
+
+  const enabled =
+    document.getElementById("volunteerStatus").checked;
+
+  showToast(
+    enabled
+      ? "Condición de voluntario activada."
+      : "Condición de voluntario desactivada."
+  );
+}
+
+
+function saveAvailability(){
+
+  closeModal("availabilityModal");
+
+  showToast(
+    "Disponibilidad guardada."
+  );
+}
+
+
+/* ============================================================
+   PROFILE
+============================================================ */
+
+function saveProfile(){
+
+  showToast(
+    "Perfil y preferencias guardados."
+  );
+}
+
+
+function changeLanguage(language){
+
+  const names = {
+    es:"Español",
+    en:"English",
+    zh:"中文"
+  };
+
+  showToast(
+    "Idioma seleccionado: " + names[language]
+  );
+}
+
+
+function setFontSize(size){
+
+  document.documentElement.style
+    .setProperty(
+      "--font-size",
+      size + "px"
+    );
+}
+
+
+/* ============================================================
+   ADMIN SECURITY
+============================================================ */
+
+function updateWeight(id,value){
+
+  document.getElementById(id).textContent =
+    value + "%";
+}
+
+
+function saveSecurityConfig(){
+
+  showToast(
+    "Parámetros de seguridad actualizados."
+  );
+}
+
+
+function saveManualSecurity(){
+
+  showToast(
+    "Nivel de seguridad de la zona actualizado manualmente."
+  );
+}
+
+
+/* ============================================================
+   REPORTS
+============================================================ */
+
+function generateReport(){
+
+  document
+    .getElementById("reportResult")
+    .classList.remove("hidden");
+
+  showToast(
+    "Informe generado correctamente."
+  );
+}
+
+
+/* ============================================================
+   PRIVACY
+============================================================ */
+
+function showPrivacy(){
+
+  openModal("privacyModal");
+
+}
+
+
+/* ============================================================
+   MODALS
+============================================================ */
+
+function openModal(id){
+
+  const modal =
+    document.getElementById(id);
+
+  if(modal){
+    modal.classList.add("show");
+  }
+
+}
+
+
+function closeModal(id){
+
+  const modal =
+    document.getElementById(id);
+
+  if(modal){
+    modal.classList.remove("show");
+  }
+
+}
+
+
+/* ============================================================
+   TOAST
+============================================================ */
+
+let toastTimer;
+
+function showToast(message){
+
+  const toast =
+    document.getElementById("toast");
+
+  toast.textContent = message;
+
+  toast.classList.add("show");
+
+  clearTimeout(toastTimer);
+
+  toastTimer = setTimeout(
+    () => toast.classList.remove("show"),
+    3000
+  );
+}
+
+
+/* ============================================================
+   INITIALIZATION
+============================================================ */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  /*
+   * El contador se inicia únicamente al acceder a la pantalla
+   * de alertas durante la demostración.
+   */
+
+});
+
+
+/*
+ * Para probar la prealerta:
+ * se inicia automáticamente al entrar en la pantalla de alertas.
+ */
+
+const originalNavigate = navigate;
+
+navigate = function(page){
+
+  originalNavigate(page);
+
+  if(page === "alerts"){
+
+    const pre =
+      document.getElementById("preAlert");
+
+    if(
+      pre &&
+      !pre.classList.contains("hidden")
+    ){
+
+      clearInterval(countdownTimer);
+
+      countdownValue = 30;
+
+      document.getElementById(
+        "countdown"
+      ).textContent = countdownValue;
+
+      countdownTimer = setInterval(() => {
+
+        countdownValue--;
+
+        const counter =
+          document.getElementById("countdown");
+
+        if(counter){
+          counter.textContent = countdownValue;
+        }
+
+        if(countdownValue <= 0){
+
+          clearInterval(countdownTimer);
+
+          activateAlert();
+
+        }
+
+      },1000);
+
+    }
+
+  }
+
+};
+</script>
+
+</body>
+</html>
