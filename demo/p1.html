@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Senda URJC — Prototipo rama tradicional (v1.1)</title>
+<!--
+  PROTOTIPO A MANO v1.1 (actualizado 28/08/2026) — rama TRADICIONAL del estudio.
+  v1.0 era del 21/07 (antes de la entrevista). Esta v1.1 propaga las correcciones de la
+  ENTREVISTA 1 con el cliente (25/08): administración como app WEB separada del móvil [S-11],
+  tickets a URJC/LumenSmart sin ayuntamiento [S-10], penalización manual del admin [S-12],
+  voluntariado autoservicio y solo físico [S-07], desvío = ancho del camino + 2 m y 30 s
+  configurable por el usuario [S-05], pérdida de cobertura dispara alerta [S-03], tercer idioma
+  chino [RNF-07], horario de campus [RNF-16], rutas guardadas [RF-22], accesibilidad [RF-21].
+  Derivado de F2 (requisitos), F3 (casos de uso) y el registro de supuestos. Autocontenido.
+-->
+<style>
+  :root {
+    --rojo: #9d2235; --rojo-suave: #f6e8ea; --gris: #6b6b6b; --borde: #d9d9d9;
+    --fondo: #f4f4f4; --ok: #2e7d32; --aviso: #e65100; --info: #1565c0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", system-ui, sans-serif; }
+  body { background: #e9e9e9; display: flex; flex-direction: column; align-items: center; padding: 24px; gap: 16px; }
+  h1 { font-size: 1.1rem; color: #333; }
+  .nota { font-size: .8rem; color: var(--gris); max-width: 480px; text-align: center; }
+  .dispositivos { display: flex; flex-wrap: wrap; gap: 26px; align-items: flex-start; justify-content: center; }
+
+  .telefono {
+    width: 400px; height: 800px; background: #fff; border: 12px solid #222;
+    border-radius: 36px; overflow: hidden; display: flex; flex-direction: column; position: relative;
+  }
+  header.app {
+    background: var(--rojo); color: #fff; padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; min-height: 52px;
+  }
+  header.app .titulo { font-weight: 600; font-size: .95rem; }
+  header.app .logo { font-size: .62rem; border: 1px solid rgba(255,255,255,.6); padding: 2px 6px; border-radius: 4px; }
+  main { flex: 1; overflow-y: auto; padding: 14px; background: var(--fondo); }
+  nav.tabs { display: flex; border-top: 1px solid var(--borde); background: #fff; }
+  nav.tabs button {
+    flex: 1; padding: 8px 2px; border: 0; background: none; font-size: .58rem;
+    color: var(--gris); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  nav.tabs button .ico { font-size: 1.05rem; }
+  nav.tabs button.activa { color: var(--rojo); font-weight: 700; }
+
+  .pantalla { display: none; }
+  .pantalla.visible { display: block; }
+
+  .tarjeta { background: #fff; border: 1px solid var(--borde); border-radius: 10px; padding: 13px; margin-bottom: 11px; }
+  .tarjeta h3 { font-size: .88rem; margin-bottom: 8px; color: #333; }
+  .campo { width: 100%; padding: 9px; border: 1px solid var(--borde); border-radius: 8px; margin-bottom: 9px; font-size: .88rem; }
+  .btn { display: block; width: 100%; padding: 11px; border: 0; border-radius: 8px; background: var(--rojo); color: #fff; font-size: .92rem; font-weight: 600; cursor: pointer; }
+  .btn.secundario { background: #fff; color: var(--rojo); border: 2px solid var(--rojo); }
+  .btn.verde { background: var(--ok); }
+  .btn.grande { padding: 16px; font-size: 1.02rem; }
+  .tag { display: inline-block; font-size: .58rem; background: #eef; color: var(--info); border-radius: 4px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; }
+  .tag.s { background: #fff3e0; color: var(--aviso); }
+
+  .mapa { position: relative; height: 250px; background: repeating-linear-gradient(45deg, #eef2ee 0 14px, #e4ece4 14px 28px); border: 1px solid var(--borde); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+  .mapa svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .mapa .etiqueta { position: absolute; font-size: .6rem; background: rgba(255,255,255,.92); border: 1px solid var(--borde); border-radius: 4px; padding: 2px 5px; }
+  .ruta-opcion { display: flex; justify-content: space-between; align-items: center; padding: 9px; border: 1px solid var(--borde); border-radius: 8px; margin-bottom: 7px; background: #fff; cursor: pointer; font-size: .85rem; }
+  .ruta-opcion.elegida { border-color: var(--ok); background: #f0f7f0; }
+  .indice { font-weight: 700; padding: 3px 7px; border-radius: 6px; font-size: .72rem; }
+  .indice.alto { background: #e8f5e9; color: var(--ok); }
+  .indice.medio { background: #fff3e0; color: var(--aviso); }
+  .indice.bajo { background: #fdecea; color: #c62828; }
+
+  .fila { display: flex; gap: 8px; }
+  .fila > * { flex: 1; }
+  .chip { display: inline-block; padding: 7px 9px; border: 1px solid var(--borde); border-radius: 18px; font-size: .76rem; margin: 0 5px 7px 0; background: #fff; cursor: pointer; }
+  .chip.marcado { background: var(--rojo-suave); border-color: var(--rojo); color: var(--rojo); font-weight: 600; }
+  .estado-voy { text-align: center; padding: 6px 0 10px; }
+  .estado-voy .circulo { width: 96px; height: 96px; border-radius: 50%; border: 6px solid var(--ok); display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-size: 1.8rem; }
+  .sos { position: absolute; bottom: 66px; right: 12px; width: 60px; height: 60px; border-radius: 50%; background: var(--rojo); color: #fff; border: 0; font-weight: 800; font-size: .78rem; box-shadow: 0 3px 8px rgba(0,0,0,.3); cursor: pointer; z-index: 5; }
+  ul.lista-simple { list-style: none; }
+  ul.lista-simple li { padding: 7px 0; border-bottom: 1px solid #eee; font-size: .8rem; display: flex; justify-content: space-between; gap: 6px; }
+  .estado-ticket { font-size: .68rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+  .estado-ticket.abierto { background: #fdecea; color: #c62828; }
+  .estado-ticket.curso { background: #fff3e0; color: var(--aviso); }
+  .estado-ticket.resuelto { background: #e8f5e9; color: var(--ok); }
+
+  /* Modales de prealerta / alerta / SOS */
+  .modal-capa { position: absolute; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; z-index: 10; }
+  .modal-capa.visible { display: flex; }
+  .modal { background: #fff; border-radius: 14px; padding: 20px; width: 84%; text-align: center; }
+  .modal h3 { margin-bottom: 8px; }
+  .modal .cuenta { font-size: 2.6rem; font-weight: 800; color: var(--aviso); margin: 8px 0; }
+  .modal.alerta-roja { border: 3px solid var(--rojo); }
+
+  /* Navegador web (app de administración) */
+  .navegador { width: 780px; max-width: 96vw; background: #fff; border: 1px solid var(--borde); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,.14); align-self: stretch; }
+  .navegador .barra { background: #e8e8ea; padding: 9px 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--borde); }
+  .navegador .barra .puntos i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+  .navegador .barra .url { flex: 1; background: #fff; border: 1px solid var(--borde); border-radius: 6px; padding: 5px 12px; font-size: .72rem; color: var(--gris); }
+  .navegador .cabecera { background: var(--rojo); color: #fff; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; }
+  .navegador .cabecera .rol { font-size: .66rem; border: 1px solid rgba(255,255,255,.6); padding: 2px 7px; border-radius: 4px; }
+  .navegador .cuerpo { padding: 16px; background: #f7f7f9; }
+  .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .admin-grid .full { grid-column: 1 / -1; }
+
+  /* Trazabilidad */
+  .traza { max-width: 800px; background: #fff; border: 1px solid var(--borde); border-radius: 10px; padding: 16px; font-size: .78rem; }
+  .traza h2 { font-size: .95rem; margin-bottom: 8px; color: var(--rojo); }
+  .traza table { width: 100%; border-collapse: collapse; }
+  .traza th, .traza td { border: 1px solid #e5e5e5; padding: 5px 7px; text-align: left; vertical-align: top; }
+  .traza th { background: #faf5f5; }
+</style>
+</head>
+<body>
+
+<h1>Senda URJC — Prototipo de la rama tradicional (v1.1)</h1>
+<p class="nota">Actualizado tras la <b>Entrevista 1</b> (25/08). Dos frentes: la <b>app móvil</b> (uso general) y la <b>app web de administración</b> (solo PDI/PTGAS) <span class="tag s">S-11</span>. Etiquetas naranjas = supuesto ya validado/corregido con el cliente. Prueba la <b>prealerta</b> en «Voy contigo».</p>
+
+<div class="dispositivos">
+
+<!-- ================= APP MÓVIL ================= -->
+<div class="telefono">
+  <header class="app">
+    <span class="titulo" id="titulo-pantalla">Senda URJC</span>
+    <span class="logo">Identidad URJC [RNF-06]</span>
+  </header>
+
+  <main id="principal">
+    <!-- LOGIN — CU-01 -->
+    <section class="pantalla visible" id="p-login">
+      <div class="tarjeta" style="text-align:center; padding: 26px 14px;">
+        <div style="font-size:2.6rem; margin-bottom:6px;">🛡️</div>
+        <h3 style="font-size:1.15rem;">Senda URJC</h3>
+        <p style="font-size:.78rem; color:var(--gris); margin-bottom:16px;">Rutas seguras por tu campus</p>
+        <button class="btn grande" onclick="ir('p-mapa')">Entrar con cuenta URJC (SSO / LDAP)<span class="tag">RF-01</span></button>
+        <p style="font-size:.68rem; color:var(--gris); margin-top:8px;">@urjc.es · @alumnos.urjc.es — sin acceso para visitantes <span class="tag s">S-02</span></p>
+        <p style="font-size:.66rem; color:var(--aviso); margin-top:8px;">🕑 Disponible solo en horario de apertura del campus <span class="tag">RNF-16</span></p>
+      </div>
+      <div class="tarjeta">
+        <h3>Idioma / Language / 语言 <span class="tag">RNF-07</span></h3>
+        <span class="chip marcado">Español</span><span class="chip">English</span><span class="chip">中文</span>
+      </div>
+    </section>
+
+    <!-- MAPA / RUTAS — CU-02 -->
+    <section class="pantalla" id="p-mapa">
+      <input class="campo" placeholder="🔍 ¿A dónde vas? (ej.: Aulario II)">
+      <div class="mapa">
+        <svg viewBox="0 0 380 250">
+          <path d="M 40 215 C 100 180, 120 130, 200 105 S 320 65, 340 30" fill="none" stroke="#2e7d32" stroke-width="5"/>
+          <path d="M 40 215 C 140 205, 240 160, 340 30" fill="none" stroke="#e65100" stroke-width="4" stroke-dasharray="8 6"/>
+          <circle cx="40" cy="215" r="8" fill="#1565c0"/>
+          <circle cx="340" cy="30" r="8" fill="#9d2235"/>
+          <circle cx="150" cy="168" r="5" fill="#e65100"/>
+        </svg>
+        <span class="etiqueta" style="left:12px; bottom:12px;">📍 Metro Móstoles (acceso ≤500 m <span class="tag s">S-01</span>)</span>
+        <span class="etiqueta" style="right:8px; top:10px;">🏫 Aulario II</span>
+        <span class="etiqueta" style="left:110px; bottom:58px;">⚠ Farola avería — dato LumenSmart [RF-04/05]</span>
+      </div>
+      <div class="ruta-opcion elegida" onclick="marcarRuta(this)"><span>Ruta A — 14 min</span><span class="indice alto">Seguridad: 99</span></div>
+      <div class="ruta-opcion" onclick="marcarRuta(this)"><span>Ruta B — 9 min</span><span class="indice medio">Seguridad: 95</span></div>
+      <div class="ruta-opcion" onclick="marcarRuta(this)"><span>Ruta C — 8 min</span><span class="indice bajo">Seguridad: 90</span></div>
+      <p style="font-size:.66rem; color:var(--gris); margin:2px 0 8px;">Índice 0-100 (iluminación + afluencia + entorno), pesos parametrizables por campus/día/hora <span class="tag s">S-08</span> · muestra las 3 más seguras [RF-02/03]</p>
+      <button class="btn" onclick="ir('p-voy')">Iniciar con «Voy contigo» [RF-06]</button>
+      <div style="height:7px"></div>
+      <button class="btn secundario" onclick="alertaSimple('Trayecto iniciado sin compartir ubicación.')">Iniciar sin compartir</button>
+    </section>
+
+    <!-- VOY CONTIGO — CU-03 -->
+    <section class="pantalla" id="p-voy">
+      <div class="tarjeta estado-voy">
+        <div class="circulo">🚶</div>
+        <h3 id="voy-estado">Trayecto en curso — 8 min restantes</h3>
+        <p style="font-size:.76rem; color:var(--gris);">Compartiendo con: <b id="voy-dest">María (contacto de confianza)</b> [RF-07]</p>
+      </div>
+      <div class="tarjeta">
+        <h3>Acompañamiento [RF-07/08]</h3>
+        <span class="chip marcado" onclick="setDest(this,'María (contacto de confianza)')">Contacto de confianza</span>
+        <span class="chip" onclick="setDest(this,'Voluntario/a asignado')">Voluntario/a <span class="tag s">S-07</span></span>
+      </div>
+      <div class="tarjeta">
+        <h3>Supervisión del trayecto [RF-11]</h3>
+        <p style="font-size:.76rem; margin-bottom:8px;">Salta la prealerta si te desvías más del <b>ancho del camino (+ ~2 m)</b> o te paras por inactividad <span class="tag s">S-05</span>. Los 30 s para confirmar son configurables por ti en tu perfil.</p>
+        <button class="btn" style="background:var(--aviso);" onclick="lanzarPrealerta()">▶ Simular parada/desvío (prealerta)</button>
+        <div style="height:7px"></div>
+        <button class="btn secundario" onclick="lanzarSinCobertura()">📶 Simular pérdida de cobertura <span class="tag s">S-03</span></button>
+      </div>
+      <div class="tarjeta">
+        <h3>Cambiar de ruta [RF-13]</h3>
+        <button class="btn secundario" onclick="alertaSimple('Ruta recalculada. La supervisión se re-ancla a la nueva ruta SIN generar alerta [S-06 — pendiente de validar en la 2ª entrevista]. Tu contacto ve la ruta actualizada.')">Pedir ruta nueva</button>
+      </div>
+      <button class="sos" onclick="lanzarSOS()" title="RF-14 [S-04]">SOS</button>
+    </section>
+
+    <!-- INCIDENCIAS — CU-05 -->
+    <section class="pantalla" id="p-incidencias">
+      <div class="tarjeta">
+        <h3>Reportar incidencia [RF-15]</h3>
+        <span class="chip" onclick="soloUno(this)">💡 Farola fundida</span>
+        <span class="chip" onclick="soloUno(this)">🌑 Zona solitaria/miedo</span>
+        <span class="chip" onclick="soloUno(this)">🚧 Obstáculo en la vía</span>
+        <span class="chip" onclick="soloUno(this)">⚠️ Punto con dificultad</span>
+        <input class="campo" placeholder="Descripción (opcional)">
+        <p style="font-size:.66rem; color:var(--gris); margin-bottom:8px;">Ubicación: la actual (ajustable en el mapa)</p>
+        <button class="btn" onclick="alertaSimple('Reporte enviado. Un administrador lo revisará y asignará manualmente el grado de inseguridad de la zona [S-12]; se crea el ticket [RF-16/17].')">Enviar reporte</button>
+      </div>
+      <div class="tarjeta">
+        <h3>Mis reportes — ciclo del ticket [RF-18] <span class="tag s">S-10</span></h3>
+        <ul class="lista-simple">
+          <li><span>💡 Farola — Paseo central (→ LumenSmart)</span><span class="estado-ticket curso">EN CURSO</span></li>
+          <li><span>🚧 Obstáculo — Acceso metro (→ Mant. URJC)</span><span class="estado-ticket abierto">ABIERTO</span></li>
+          <li><span>🌑 Zona solitaria — Parking norte</span><span class="estado-ticket resuelto">RESUELTO ✓ notificado</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- PERFIL — CU-06 -->
+    <section class="pantalla" id="p-perfil">
+      <div class="tarjeta">
+        <h3>Mi cuenta [RF-01]</h3>
+        <ul class="lista-simple">
+          <li><span>Usuario</span><span>nombre.apellido@alumnos.urjc.es</span></li>
+          <li><span>Colectivo</span><span>Estudiante</span></li>
+          <li><span>Campus habitual</span><span>Móstoles</span></li>
+        </ul>
+      </div>
+      <div class="tarjeta">
+        <h3>Contacto de confianza [RF-09]</h3>
+        <input class="campo" value="María P. (comunidad URJC)">
+        <p style="font-size:.66rem; color:var(--gris); margin-bottom:8px;">Debe ser una persona de la comunidad URJC <span class="tag s">S-02</span>.</p>
+        <button class="btn secundario">Guardar contacto</button>
+      </div>
+      <div class="tarjeta">
+        <h3>Accesibilidad y movilidad [RF-21]</h3>
+        <span class="chip marcado">Evitar escaleras</span><span class="chip">Alto contraste</span><span class="chip">Lector de pantalla</span>
+        <p style="font-size:.66rem; color:var(--gris); margin-top:4px;">La ruta tiene en cuenta tu perfil (p. ej. silla de ruedas).</p>
+      </div>
+      <div class="tarjeta">
+        <h3>Rutas guardadas [RF-22]</h3>
+        <ul class="lista-simple">
+          <li><span>🏠 Aulario II → Metro Móstoles</span><span>↩ repetir</span></li>
+          <li><span>📚 Biblioteca → Parking norte</span><span>↩ repetir</span></li>
+        </ul>
+      </div>
+      <div class="tarjeta">
+        <h3>Voluntariado [RF-10] <span class="tag s">S-07</span></h3>
+        <p style="font-size:.74rem; color:var(--gris); margin-bottom:8px;">Cualquiera con cuenta URJC puede marcarse voluntario, <b>sin aprobación previa</b>. Recibirás solicitudes por proximidad o según tu calendario. Acompañamiento <b>solo físico</b>.</p>
+        <button class="btn secundario" onclick="alertaSimple('Te has marcado como voluntario/a. Recibirás solicitudes de acompañamiento (pestaña Voluntario).')">Quiero ser voluntario/a</button>
+      </div>
+      <div class="tarjeta">
+        <h3>Privacidad [RNF-01/02/03]</h3>
+        <p style="font-size:.72rem; color:var(--gris);">La ubicación se borra al terminar la ruta; el historial no se guarda más de 24 h salvo incidencia <span class="tag s">S-09</span>. Solo quedan estadísticas anonimizadas.</p>
+      </div>
+    </section>
+
+    <!-- VOLUNTARIO — CU-07 -->
+    <section class="pantalla" id="p-voluntario">
+      <div class="tarjeta">
+        <h3>Solicitudes de acompañamiento [RF-08] <span class="tag s">S-07</span></h3>
+        <ul class="lista-simple">
+          <li><span>🚶‍♀️ Solicitud: Metro → Biblioteca (ahora, a 120 m de ti)</span></li>
+        </ul>
+        <div class="fila" style="margin-top:8px;">
+          <button class="btn verde" onclick="alertaSimple('Aceptada. Recibes el trayecto y la ubicación del usuario; el usuario ve tu confirmación (CU-07).')">Aceptar</button>
+          <button class="btn secundario" onclick="alertaSimple('Rechazada. La solicitud pasa a otros voluntarios disponibles (CU-07 alt 2a).')">Rechazar</button>
+        </div>
+      </div>
+      <div class="tarjeta">
+        <h3>Mi disponibilidad (por calendario)</h3>
+        <span class="chip marcado">L-V tarde</span><span class="chip">Fines de semana</span><span class="chip">Noches</span>
+      </div>
+      <div class="tarjeta">
+        <h3>Acompañamiento activo</h3>
+        <p style="font-size:.76rem; color:var(--gris);">Ninguno. Al aceptar una solicitud verás aquí el trayecto en tiempo real. El acompañamiento es <b>presencial</b> <span class="tag s">S-07</span>.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL PREALERTA — RF-11/12 -->
+  <div class="modal-capa" id="modal-prealerta">
+    <div class="modal">
+      <h3>⚠️ ¿Estás bien?</h3>
+      <p style="font-size:.8rem;">Hemos detectado una parada/desvío inusual (vibración + notificación) [RF-11]</p>
+      <div class="cuenta" id="cuenta-atras">30</div>
+      <button class="btn verde" onclick="confirmarBien()">✅ Estoy bien</button>
+      <p style="font-size:.66rem; color:var(--gris); margin-top:8px;">Sin confirmación en 30 s → alerta automática [RF-12]</p>
+    </div>
+  </div>
+
+  <!-- MODAL ALERTA -->
+  <div class="modal-capa" id="modal-alerta">
+    <div class="modal alerta-roja">
+      <h3 style="color:var(--rojo);">🚨 Alerta enviada</h3>
+      <p style="font-size:.8rem;" id="alerta-texto">Se ha avisado a tu contacto / Servicio de Seguridad con tu última ubicación [RF-12]. La compartición sigue activa.</p>
+      <p style="font-size:.68rem; color:var(--gris); margin:8px 0;">El trayecto queda marcado con incidencia (retención <span class="tag s">S-09</span>)</p>
+      <button class="btn" onclick="cerrarAlerta()">Entendido</button>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <button data-p="p-login" class="activa"><span class="ico">🔑</span>Acceso</button>
+    <button data-p="p-mapa"><span class="ico">🗺️</span>Rutas</button>
+    <button data-p="p-voy"><span class="ico">🤝</span>Voy contigo</button>
+    <button data-p="p-incidencias"><span class="ico">📢</span>Incid.</button>
+    <button data-p="p-perfil"><span class="ico">👤</span>Perfil</button>
+    <button data-p="p-voluntario"><span class="ico">🙋</span>Volunt.</button>
+  </nav>
+</div>
+
+<!-- ================= APP WEB DE ADMINISTRACIÓN (S-11) ================= -->
+<div class="navegador">
+  <div class="barra">
+    <span class="puntos"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></span>
+    <span class="url">🔒 admin.senda.urjc.es — acceso solo desde la web</span>
+  </div>
+  <div class="cabecera">
+    <span style="font-weight:600;">Senda URJC · Administración</span>
+    <span class="rol">PDI / PTGAS autorizados <span class="tag s" style="background:rgba(255,255,255,.2); color:#fff;">S-11</span></span>
+  </div>
+  <div class="cuerpo">
+    <p style="font-size:.72rem; color:var(--gris); margin-bottom:12px;">La administración es una <b>aplicación web independiente</b> del móvil [RNF-15]. Desde el móvil todos hacen lo mismo; aquí entran solo los perfiles institucionales con permiso (incluido el Servicio de Seguridad, con cuentas genéricas).</p>
+    <div class="admin-grid">
+
+      <div class="tarjeta full">
+        <h3>Panel de tickets de incidencias [RF-17/18, CU-08] <span class="tag s">S-10</span></h3>
+        <ul class="lista-simple">
+          <li><span>#041 💡 Farola — Paseo central</span><span class="estado-ticket curso">EN CURSO · → LumenSmart</span></li>
+          <li><span>#042 🚧 Obstáculo — Acceso metro</span><span class="estado-ticket abierto">ABIERTO · → Mant. URJC</span></li>
+          <li><span>#039 🌑 Zona solitaria — Parking norte (grave)</span><span class="estado-ticket resuelto">RESUELTO</span></li>
+        </ul>
+        <div class="fila" style="margin-top:8px;">
+          <button class="btn secundario" onclick="alertaWeb('Ticket #042 derivado a Mantenimiento de la URJC [S-10]. Se avisa por otros medios, fuera de la app. Sin ayuntamiento.')">Derivar #042</button>
+          <button class="btn verde" onclick="alertaWeb('Ticket #041 resuelto. Se notifica a quien reportó [RF-18, S-10].')">Resolver #041</button>
+        </div>
+      </div>
+
+      <div class="tarjeta">
+        <h3>Parámetros de seguridad [RF-20, CU-10] <span class="tag s">S-08</span></h3>
+        <p style="font-size:.7rem; color:var(--gris); margin-bottom:6px;">Ajustables por campus / día / hora.</p>
+        <div class="fila">
+          <div><label style="font-size:.7rem;">Peso iluminación</label><input class="campo" value="0.34"></div>
+          <div><label style="font-size:.7rem;">Peso afluencia</label><input class="campo" value="0.33"></div>
+          <div><label style="font-size:.7rem;">Peso entorno</label><input class="campo" value="0.33"></div>
+        </div>
+        <label style="font-size:.7rem;">Desvío para prealerta <span class="tag s">S-05</span></label>
+        <input class="campo" value="ancho del camino + 2 m">
+        <p style="font-size:.64rem; color:var(--gris);">La parada por inactividad se fijará con el documento de umbrales del cliente (pendiente).</p>
+      </div>
+
+      <div class="tarjeta">
+        <h3>Estadísticas y mapas de calor [RF-19, CU-09] <span class="tag">RNF-03</span></h3>
+        <p style="font-size:.74rem; color:var(--gris);">Uso por campus · rutas más solicitadas · incidencias por tipo/zona · alertas atendidas. Todo anonimizado, sin datos individualizables. Informes para vicedecanatos.</p>
+        <div class="mapa" style="height:110px; margin-top:8px;">
+          <span class="etiqueta" style="left:20px; top:16px;">🔥 Aulario</span>
+          <span class="etiqueta" style="right:24px; bottom:16px;">🔥 Cafetería</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div><!-- /.dispositivos -->
+
+<div class="traza">
+  <h2>Trazabilidad pantalla → requisitos (rúbrica E / simétrica a P14) — v1.1</h2>
+  <table>
+    <tr><th>Pantalla</th><th>Caso de uso</th><th>Requisitos cubiertos</th><th>Supuestos</th></tr>
+    <tr><td>Móvil · Acceso (SSO/LDAP)</td><td>CU-01</td><td>RF-01, RNF-07, RNF-13, RNF-16</td><td>S-02</td></tr>
+    <tr><td>Móvil · Rutas (mapa e índice)</td><td>CU-02</td><td>RF-02, RF-03, RF-04, RF-05, RNF-11</td><td>S-01, S-08</td></tr>
+    <tr><td>Móvil · Voy contigo (+ prealerta, SOS, sin cobertura)</td><td>CU-03, CU-04</td><td>RF-06, RF-07, RF-08, RF-11, RF-12, RF-13, RF-14, RNF-05</td><td>S-03, S-04, S-05, S-06, S-09</td></tr>
+    <tr><td>Móvil · Incidencias (reporte + mis tickets)</td><td>CU-05</td><td>RF-15, RF-16, RF-17, RF-18</td><td>S-10, S-12</td></tr>
+    <tr><td>Móvil · Perfil (contacto, accesibilidad, rutas guardadas, voluntariado, privacidad)</td><td>CU-06</td><td>RF-09, RF-10, RF-21, RF-22, RNF-01, RNF-02, RNF-03</td><td>S-07, S-09</td></tr>
+    <tr><td>Móvil · Voluntario (solicitudes)</td><td>CU-07</td><td>RF-08, RF-10</td><td>S-07</td></tr>
+    <tr><td><b>Web</b> · Administración (tickets, parámetros, estadísticas)</td><td>CU-08, CU-09, CU-10</td><td>RF-17, RF-18, RF-19, RF-20, RNF-03, RNF-15</td><td>S-05, S-08, S-10, S-11, S-12</td></tr>
+  </table>
+  <p style="margin-top:8px; color:var(--gris);">Cambio principal de la v1.1: la administración pasa de ser una pestaña del móvil a una <b>app web separada</b> [S-11 invertido → RNF-15]. Cobertura: 22/22 RF representados. No representables visualmente (proceso/infraestructura): RNF-08 (open source), RNF-09 (disponibilidad 24/7), RNF-14 (ERS IEEE 29148), RNF-18 (bajo consumo).</p>
+</div>
+
+<script>
+  const titulos = { "p-login":"Senda URJC","p-mapa":"Calcular ruta","p-voy":"Voy contigo","p-incidencias":"Incidencias","p-perfil":"Mi perfil","p-voluntario":"Modo voluntario" };
+  function ir(id) {
+    document.querySelectorAll(".pantalla").forEach(p => p.classList.toggle("visible", p.id === id));
+    document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("activa", b.dataset.p === id));
+    document.getElementById("titulo-pantalla").textContent = titulos[id];
+  }
+  document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => ir(b.dataset.p)));
+  function soloUno(chip) { chip.parentElement.querySelectorAll(".chip").forEach(c => c.classList.remove("marcado")); chip.classList.add("marcado"); }
+  function marcarRuta(el) { document.querySelectorAll(".ruta-opcion").forEach(r => r.classList.remove("elegida")); el.classList.add("elegida"); }
+  function setDest(chip, txt) { soloUno(chip); document.getElementById("voy-dest").textContent = txt; }
+  function alertaSimple(msg) { document.getElementById("alerta-texto").textContent = msg; document.getElementById("modal-alerta").classList.add("visible"); }
+  function cerrarAlerta() { document.getElementById("modal-alerta").classList.remove("visible"); }
+  function alertaWeb(msg) { window.alert(msg); }
+
+  let timer = null, restante = 30;
+  function lanzarPrealerta() {
+    restante = 30; document.getElementById("cuenta-atras").textContent = restante;
+    document.getElementById("modal-prealerta").classList.add("visible");
+    timer = setInterval(() => {
+      restante--; document.getElementById("cuenta-atras").textContent = restante;
+      if (restante <= 0) { clearInterval(timer); document.getElementById("modal-prealerta").classList.remove("visible");
+        alertaSimple("Sin confirmación en 30 s: alerta automática enviada al contacto / Servicio de Seguridad con la última ubicación [RF-12]."); }
+    }, 1000);
+  }
+  function confirmarBien() { clearInterval(timer); document.getElementById("modal-prealerta").classList.remove("visible"); }
+  function lanzarSOS() { clearInterval(timer); document.getElementById("modal-prealerta").classList.remove("visible");
+    alertaSimple("SOS: alerta INMEDIATA al Servicio de Seguridad y a tu contacto con tu ubicación [RF-14, S-04]. Sin pasos intermedios."); }
+  function lanzarSinCobertura() { clearInterval(timer);
+    alertaSimple("Pérdida de cobertura: se trata como un desvío y dispara la alerta automáticamente [S-03]. La ruta se conserva en el móvil; al recuperar cobertura, la alerta ya está enviada."); }
+</script>
+</body>
+</html>

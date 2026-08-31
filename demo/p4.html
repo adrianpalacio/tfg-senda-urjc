@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prototipo Navegable - Sistema de Rutas Seguras URJC</title>
+<style>
+  :root{
+    --primary:#1a4d8f;
+    --primary-dark:#123a6b;
+    --accent:#2e9e5b;
+    --warn:#e0a800;
+    --danger:#c0392b;
+    --bg:#f4f6f9;
+    --card:#ffffff;
+    --text:#1e2430;
+    --muted:#6b7280;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);}
+  header.topbar{
+    background:var(--primary);color:#fff;padding:10px 16px;
+    display:flex;justify-content:space-between;align-items:center;
+    position:sticky;top:0;z-index:50;
+  }
+  header.topbar .title{font-weight:600;font-size:15px;}
+  header.topbar select{padding:4px;border-radius:6px;border:none;}
+  .mode-switch{display:flex;gap:6px;}
+  .mode-switch button{
+    background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);
+    color:#fff;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;
+  }
+  .mode-switch button.active{background:#fff;color:var(--primary);font-weight:600;}
+
+  .app-shell{
+    max-width:420px;margin:0 auto;background:var(--card);
+    min-height:calc(100vh - 46px);position:relative;
+    box-shadow:0 0 12px rgba(0,0,0,.08);
+  }
+  .app-shell.wide{max-width:920px;}
+
+  .screen{display:none;padding:16px;padding-bottom:80px;animation:fade .15s ease-in;}
+  .screen.active{display:block;}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+
+  h2.screen-title{margin:0 0 4px 0;font-size:19px;color:var(--primary-dark);}
+  p.subtitle{margin:0 0 16px 0;color:var(--muted);font-size:13px;}
+
+  .req-tag{
+    display:inline-block;font-size:10px;background:#eef2f7;color:var(--muted);
+    border-radius:4px;padding:1px 6px;margin-left:6px;font-family:monospace;
+  }
+
+  label{display:block;font-size:13px;margin:10px 0 4px;font-weight:600;color:#333;}
+  input[type=text],input[type=number],input[type=search],select,textarea{
+    width:100%;padding:9px 10px;border:1px solid #d3d9e0;border-radius:8px;font-size:14px;
+  }
+  input[type=range]{width:100%;}
+  textarea{resize:vertical;min-height:60px;}
+
+  .btn{
+    display:inline-block;background:var(--primary);color:#fff;border:none;
+    padding:11px 16px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:600;
+    width:100%;margin-top:12px;text-align:center;
+  }
+  .btn:hover{background:var(--primary-dark);}
+  .btn.secondary{background:#fff;color:var(--primary);border:1px solid var(--primary);}
+  .btn.danger{background:var(--danger);}
+  .btn.accent{background:var(--accent);}
+  .btn.small{width:auto;padding:6px 12px;font-size:12px;margin-top:0;}
+  .btn.block-row{display:block;}
+  .btn-row{display:flex;gap:8px;margin-top:12px;}
+  .btn-row .btn{margin-top:0;}
+
+  .card{
+    background:#fff;border:1px solid #e6e9ee;border-radius:var(--radius);
+    padding:12px;margin-bottom:10px;
+  }
+  .card.clickable{cursor:pointer;transition:box-shadow .15s;}
+  .card.clickable:hover{box-shadow:0 2px 8px rgba(0,0,0,.08);}
+
+  .route-card{display:flex;justify-content:space-between;align-items:center;}
+  .route-info{flex:1;}
+  .route-score{
+    width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:15px;color:#fff;flex-shrink:0;margin-left:10px;
+  }
+  .score-high{background:var(--accent);}
+  .score-mid{background:var(--warn);}
+  .score-low{background:var(--danger);}
+
+  .map-box{
+    background:repeating-linear-gradient(45deg,#dbe6f0,#dbe6f0 10px,#e7eef5 10px,#e7eef5 20px);
+    border-radius:8px;height:150px;display:flex;align-items:center;justify-content:center;
+    color:var(--muted);font-size:12px;margin-bottom:10px;border:1px solid #cdd8e3;position:relative;
+    overflow:hidden;
+  }
+  .map-dot{width:14px;height:14px;background:var(--primary);border-radius:50%;position:absolute;
+    box-shadow:0 0 0 4px rgba(26,77,143,.25);}
+  .map-line{position:absolute;height:3px;background:var(--accent);top:50%;left:10%;width:80%;}
+
+  .bottom-nav{
+    position:sticky;bottom:0;background:#fff;border-top:1px solid #e6e9ee;
+    display:flex;justify-content:space-around;padding:8px 0;max-width:420px;margin:0 auto;
+  }
+  .nav-item{
+    background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+  }
+  .nav-item.active{color:var(--primary);font-weight:700;}
+  .nav-item .ic{font-size:18px;}
+
+  .banner{padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:12px;}
+  .banner.warn{background:#fff6e0;color:#7a5a00;border:1px solid #f0d998;}
+  .banner.danger{background:#fdeceb;color:var(--danger);border:1px solid #f3c6c1;}
+  .banner.info{background:#eaf2fb;color:var(--primary-dark);border:1px solid #cddcf0;}
+
+  .status-pill{font-size:11px;padding:2px 8px;border-radius:12px;font-weight:600;}
+  .pill-abierta{background:#fdeceb;color:var(--danger);}
+  .pill-en_curso{background:#fff6e0;color:#7a5a00;}
+  .pill-resuelta{background:#e6f6ec;color:var(--accent);}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{padding:8px;text-align:left;border-bottom:1px solid #eef1f4;}
+  th{color:var(--muted);font-weight:600;font-size:12px;}
+  tr.clickable-row{cursor:pointer;}
+  tr.clickable-row:hover{background:#f7f9fc;}
+
+  .toggle-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f2f5;}
+  .switch{position:relative;width:42px;height:24px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.2s;}
+  .slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+  input:checked + .slider{background:var(--accent);}
+  input:checked + .slider:before{transform:translateX(18px);}
+
+  .toast{
+    position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+    background:#222;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;
+    z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+  .kpi{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .kpi .card{flex:1;min-width:110px;text-align:center;padding:14px 8px;}
+  .kpi .num{font-size:22px;font-weight:700;color:var(--primary);}
+  .kpi .lbl{font-size:11px;color:var(--muted);}
+
+  .heatmap{
+    display:grid;grid-template-columns:repeat(10,1fr);gap:2px;margin:10px 0;
+  }
+  .heatmap div{height:18px;border-radius:2px;}
+
+  .filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .filters select{width:auto;flex:1;min-width:100px;}
+
+  .badge-lang{font-size:11px;color:var(--muted);}
+
+  .link-btn{background:none;border:none;color:var(--primary);cursor:pointer;font-size:13px;text-decoration:underline;padding:0;}
+
+  .back-btn{background:none;border:none;color:var(--primary);font-size:13px;cursor:pointer;margin-bottom:8px;padding:0;}
+
+  .weight-row{margin-bottom:14px;}
+  .weight-row .value{font-size:12px;color:var(--muted);}
+
+  footer.reqinfo{font-size:11px;color:#9aa3ad;margin-top:20px;border-top:1px dashed #dde3ea;padding-top:8px;}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="title">🛡️ RutaSegura URJC</div>
+  <div class="mode-switch">
+    <button id="btnModeApp" class="active" onclick="setMode('app')">📱 App móvil</button>
+    <button id="btnModeAdmin" onclick="setMode('admin')">🖥️ Web Admin</button>
+  </div>
+</header>
+
+<div class="app-shell" id="appShell">
+
+  <!-- ================= APP MÓVIL ================= -->
+
+  <!-- A1 Login -->
+  <section class="screen active" id="A1">
+    <h2 class="screen-title">Acceso institucional <span class="req-tag">RF-34 RF-45</span></h2>
+    <p class="subtitle">Solo cuentas @urjc.es (LDAP/SSO) <span class="req-tag">RNF-06</span></p>
+    <div style="text-align:center;padding:30px 0;font-size:40px;">🔐</div>
+    <label>Idioma <span class="req-tag">RF-15</span></label>
+    <select id="langSelectA1">
+      <option value="es">Español</option>
+      <option value="en">English</option>
+      <option value="zh">中文</option>
+    </select>
+    <button class="btn" onclick="login()">Acceder con cuenta institucional</button>
+    <p class="badge-lang" style="text-align:center;margin-top:10px;">demo: cualquier clic entra como estudiante@urjc.es</p>
+  </section>
+
+  <!-- A2 Configuración inicial accesibilidad -->
+  <section class="screen" id="A2">
+    <h2 class="screen-title">Configuración inicial <span class="req-tag">RNF-13</span></h2>
+    <p class="subtitle">Solo se muestra en el primer registro</p>
+    <div class="toggle-row">
+      <span>Movilidad reducida <span class="req-tag">RF-17</span></span>
+      <label class="switch"><input type="checkbox" id="cfgMobRed"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span>Alto contraste <span class="req-tag">RF-16</span></span>
+      <label class="switch"><input type="checkbox" id="cfgContraste"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span>Lector de pantalla <span class="req-tag">RF-16</span></span>
+      <label class="switch"><input type="checkbox" id="cfgLector"><span class="slider"></span></label>
+    </div>
+    <label>Tamaño de fuente <span class="req-tag">RF-16</span></label>
+    <input type="range" min="12" max="24" value="16" id="cfgFontSize">
+    <button class="btn" onclick="finishOnboarding()">Continuar</button>
+  </section>
+
+  <!-- A3 Inicio / búsqueda -->
+  <section class="screen" id="A3">
+    <h2 class="screen-title">Buscar ruta <span class="req-tag">RF-01 RF-42</span></h2>
+    <p class="subtitle">Hola, <span id="userNameA3">estudiante@urjc.es</span></p>
+    <label>Origen</label>
+    <input type="text" id="origenInput" placeholder="Ej: Facultad de Ciencias" value="Biblioteca Central">
+    <label>Destino</label>
+    <input type="text" id="destinoInput" placeholder="Ej: Residencia universitaria" value="Aparcamiento Norte">
+    <button class="btn" onclick="calcularRuta()">Calcular ruta</button>
+
+    <div class="card" style="margin-top:18px;">
+      <strong>Accesos rápidos</strong>
+      <div class="grid-2" style="margin-top:10px;">
+        <button class="btn secondary small block-row" onclick="goScreen('A8')">📜 Historial</button>
+        <button class="btn secondary small block-row" onclick="goScreen('A7')">👥 Contactos</button>
+        <button class="btn secondary small block-row" onclick="goScreen('A9')">⚙️ Perfil</button>
+        <button class="btn secondary small block-row" onclick="goScreen('A10')">🤝 Voluntariado</button>
+      </div>
+    </div>
+    <div id="alertaActivaBannerA3"></div>
+  </section>
+
+  <!-- A4 Resultados -->
+  <section class="screen" id="A4">
+    <button class="back-btn" onclick="goScreen('A3')">&larr; Volver</button>
+    <h2 class="screen-title">Rutas propuestas <span class="req-tag">RF-02 RF-03</span></h2>
+    <p class="subtitle">Índice de seguridad 0-100 <span class="req-tag">RNF-14</span></p>
+    <div id="lumenBanner"></div>
+    <div id="rutasList"></div>
+  </section>
+
+  <!-- A4b sin ruta / fuera de horario -->
+  <section class="screen" id="A4b">
+    <h2 class="screen-title">Sin resultados</h2>
+    <div class="banner danger" id="noRouteMsg">
+      No existe ninguna ruta disponible entre el origen y el destino seleccionados. <span class="req-tag">RF-08</span>
+    </div>
+    <button class="btn secondary" onclick="goScreen('A3')">Volver a buscar</button>
+  </section>
+
+  <!-- A5 Trayecto activo -->
+  <section class="screen" id="A5">
+    <h2 class="screen-title">Trayecto activo <span class="req-tag">RF-04</span></h2>
+    <div class="map-box">
+      <div class="map-line"></div>
+      <div class="map-dot" id="userDot" style="left:45%;top:48%;"></div>
+      📍 Seguimiento en tiempo real
+    </div>
+    <p style="font-size:13px;color:var(--muted);" id="etaText">Distancia restante: 0,8 km · ETA: 6 min</p>
+
+    <button class="btn accent" id="btnConfirmarLlegada" onclick="confirmarLlegada()" disabled>
+      Confirmar llegada <span class="req-tag">RF-06 RNF-12</span>
+    </button>
+    <div class="btn-row">
+      <button class="btn secondary" onclick="goScreen('A6')">🚨 Reportar incidencia <span class="req-tag">RF-07</span></button>
+    </div>
+    <div class="btn-row">
+      <button class="btn secondary" onclick="simularDesvio()">Simular desvío (demo) <span class="req-tag">RF-05</span></button>
+      <button class="btn secondary" onclick="simularSinConexion()">Simular sin cobertura <span class="req-tag">RF-36</span></button>
+    </div>
+    <div id="alertBox5"></div>
+  </section>
+
+  <!-- A5b prealerta / alerta activa -->
+  <section class="screen" id="A5b">
+    <h2 class="screen-title" style="color:var(--danger);">⚠️ Alerta de seguridad <span class="req-tag">RF-05 RF-36</span></h2>
+    <div class="banner danger" id="alertReasonText">Te has desviado más de 2 metros de la ruta activa.</div>
+    <p class="subtitle">Se emitirá una alerta automática a tus contactos de confianza en:</p>
+    <div style="text-align:center;font-size:36px;font-weight:700;color:var(--danger);" id="countdownText">30</div>
+    <p class="subtitle" style="text-align:center;">Tiempo configurable en tu perfil <span class="req-tag">RF-20</span></p>
+    <button class="btn accent" onclick="cancelarAlerta()">Estoy bien / Cancelar alerta <span class="req-tag">RF-21 RNF-12</span></button>
+    <div id="shareLocInfo" style="display:none;" class="banner info" style="margin-top:12px;">
+      📡 Ubicación compartida en tiempo real con tu contacto de confianza <span class="req-tag">RF-14</span>
+    </div>
+  </section>
+
+  <!-- A6 Reportar incidencia -->
+  <section class="screen" id="A6">
+    <button class="back-btn" onclick="goScreen('A3')">&larr; Volver</button>
+    <h2 class="screen-title">Reportar incidencia <span class="req-tag">RF-07</span></h2>
+    <label>Ubicación</label>
+    <input type="text" value="Detectada automáticamente: Paseo del Bosque" disabled>
+    <label>Descripción</label>
+    <textarea id="incDesc" placeholder="Describe brevemente lo ocurrido..."></textarea>
+    <label>Adjuntar imagen o vídeo <span class="req-tag">RF-27 (Fase 2)</span></label>
+    <button class="btn secondary" disabled>📎 Adjuntar archivo (próximamente)</button>
+    <button class="btn" onclick="enviarIncidencia()">Enviar incidencia</button>
+  </section>
+
+  <!-- A7 Contactos de confianza -->
+  <section class="screen" id="A7">
+    <button class="back-btn" onclick="goScreen('A3')">&larr; Volver</button>
+    <h2 class="screen-title">Contactos de confianza <span class="req-tag">RF-12 RF-13</span></h2>
+    <div id="contactsList"></div>
+    <label>Añadir contacto (solo @urjc.es)</label>
+    <input type="text" id="newContactEmail" placeholder="nombre@urjc.es">
+    <button class="btn secondary" onclick="addContact()">Añadir contacto</button>
+  </section>
+
+  <!-- A8 Historial -->
+  <section class="screen" id="A8">
+    <button class="back-btn" onclick="goScreen('A3')">&larr; Volver</button>
+    <h2 class="screen-title">Historial de rutas <span class="req-tag">RF-29</span></h2>
+    <div id="historyList"></div>
+  </section>
+
+  <!-- A9 Perfil -->
+  <section class="screen" id="A9">
+    <button class="back-btn" onclick="goScreen('A3')">&larr; Volver</button>
+    <h2 class="screen-title">Perfil <span class="req-tag">RF-15 RF-16 RF-17 RF-20 RF-23</span></h2>
+    <div class="card">
+      <strong id="profileEmail">estudiante@urjc.es</strong><br>
+      <span class="badge-lang">Rol: <span id="profileRole">Estudiante</span></span>
+    </div>
+    <div class="toggle-row">
+      <span>Movilidad reducida <span class="req-tag">RF-17</span></span>
+      <label class="switch"><input type="checkbox" id="profMobRed"><span class="slider"></span></label>
+    </div>
+    <label>Idioma</label>
+    <select id="profLang"><option value="es">Español</option><option value="en">English</option><option value="zh">中文</option></select>
+    <label>Tiempo de espera antes de alerta automática (s) <span class="req-tag">RF-20</span></label>
+    <input type="number" id="profWaitTime" value="30" min="10" max="120">
+    <button class="btn secondary" onclick="goScreen('A2')">Ir a configuración de accesibilidad</button>
+    <div class="toggle-row" style="margin-top:14px;">
+      <span>Registrarme como voluntario <span class="req-tag">RF-23</span></span>
+      <label class="switch"><input type="checkbox" id="profVoluntario" onchange="toggleVoluntario()"><span class="slider"></span></label>
+    </div>
+    <button class="btn" onclick="saveProfile()">Guardar cambios</button>
+    <button class="btn secondary" onclick="logout()" style="margin-top:20px;">Cerrar sesión</button>
+  </section>
+
+  <!-- A10 Voluntariado -->
+  <section class="screen" id="A10">
+    <button class="back-btn" onclick="goScreen('A9')">&larr; Volver</button>
+    <h2 class="screen-title">Solicitudes de acompañamiento <span class="req-tag">RF-24 RF-25</span></h2>
+    <div class="banner info">El acompañamiento es únicamente presencial, sin modalidad remota. <span class="req-tag">RF-25</span></div>
+    <div id="volList"></div>
+  </section>
+
+  <!-- Bottom nav app -->
+  <nav class="bottom-nav" id="bottomNavApp">
+    <button class="nav-item active" data-nav="A3" onclick="goScreen('A3')"><span class="ic">🧭</span>Inicio</button>
+    <button class="nav-item" data-nav="A8" onclick="goScreen('A8')"><span class="ic">📜</span>Historial</button>
+    <button class="nav-item" data-nav="A7" onclick="goScreen('A7')"><span class="ic">👥</span>Contactos</button>
+    <button class="nav-item" data-nav="A9" onclick="goScreen('A9')"><span class="ic">⚙️</span>Perfil</button>
+  </nav>
+
+  <!-- ================= WEB ADMIN ================= -->
+
+  <!-- B1 Login admin -->
+  <section class="screen" id="B1">
+    <h2 class="screen-title">Acceso administración <span class="req-tag">RF-09 RF-34</span></h2>
+    <p class="subtitle">Restringido a roles PDI / PTGAS <span class="req-tag">RNF-07</span></p>
+    <div style="text-align:center;padding:30px 0;font-size:40px;">🖥️🔐</div>
+    <button class="btn" onclick="loginAdmin()">Acceder con cuenta institucional (PDI/PTGAS)</button>
+  </section>
+
+  <!-- B2 Panel incidencias -->
+  <section class="screen" id="B2">
+    <h2 class="screen-title">Panel de incidencias <span class="req-tag">RF-09 RF-28 RF-38</span></h2>
+    <div class="filters">
+      <select id="filterCampus"><option>Todos los campus</option><option>Vicálvaro</option><option>Móstoles</option><option>Fuenlabrada</option></select>
+      <select id="filterEstado"><option>Todos los estados</option><option>abierta</option><option>en curso</option><option>resuelta</option></select>
+      <select id="filterGravedad"><option>Toda gravedad</option><option>baja</option><option>media</option><option>alta</option></select>
+    </div>
+    <table>
+      <thead><tr><th>ID</th><th>Ubicación</th><th>Fecha</th><th>Gravedad</th><th>Estado</th></tr></thead>
+      <tbody id="incidentTableBody"></tbody>
+    </table>
+    <footer class="reqinfo">RF-38: histórico conservado indefinidamente, sin borrado automático.</footer>
+  </section>
+
+  <!-- B3 Detalle incidencia -->
+  <section class="screen" id="B3">
+    <button class="back-btn" onclick="goScreen('B2')">&larr; Volver al panel</button>
+    <h2 class="screen-title">Detalle de incidencia <span class="req-tag">RF-10 RF-11 RF-26</span></h2>
+    <div class="card">
+      <strong id="detIncTitle">INC-001</strong>
+      <p id="detIncDesc" style="font-size:13px;color:var(--muted);"></p>
+      <div class="map-box" style="height:100px;"><div class="map-dot" style="left:50%;top:50%;"></div>Ubicación reportada</div>
+    </div>
+    <label>Gravedad</label>
+    <select id="detGravedad"><option>baja</option><option>media</option><option>alta</option></select>
+    <label>Estado</label>
+    <select id="detEstado" onchange="registrarCambioEstado()">
+      <option value="abierta">abierta</option>
+      <option value="en curso">en curso</option>
+      <option value="resuelta">resuelta</option>
+    </select>
+    <label>Historial de cambios de estado <span class="req-tag">RNF-20</span></label>
+    <div class="card" id="statusHistory" style="font-size:12px;"></div>
+    <label>Anular/modificar efecto sobre el índice de seguridad de la zona <span class="req-tag">RF-26</span></label>
+    <input type="number" id="detImpacto" value="-8" min="-30" max="0">
+    <button class="btn" onclick="saveIncident()">Guardar cambios</button>
+  </section>
+
+  <!-- B4 Informes -->
+  <section class="screen" id="B4">
+    <h2 class="screen-title">Informes y mapas de calor <span class="req-tag">RF-30</span></h2>
+    <div class="filters">
+      <select><option>Campus: Vicálvaro</option><option>Campus: Móstoles</option><option>Campus: Fuenlabrada</option></select>
+      <select><option>Última semana</option><option>Último mes</option><option>Último trimestre</option></select>
+    </div>
+    <div class="kpi">
+      <div class="card"><div class="num">1.284</div><div class="lbl">Rutas calculadas</div></div>
+      <div class="card"><div class="num">37</div><div class="lbl">Incidencias registradas</div></div>
+      <div class="card"><div class="num">99,6%</div><div class="lbl">Disponibilidad</div></div>
+    </div>
+    <label>Mapa de calor de rutas solicitadas</label>
+    <div class="heatmap" id="heatmapGrid"></div>
+    <label>Incidencias por tipo</label>
+    <table>
+      <thead><tr><th>Tipo</th><th>Cantidad</th></tr></thead>
+      <tbody>
+        <tr><td>Iluminación deficiente</td><td>14</td></tr>
+        <tr><td>Presencia sospechosa</td><td>9</td></tr>
+        <tr><td>Obstáculo en vía</td><td>7</td></tr>
+        <tr><td>Otros</td><td>7</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- B5 Configuración algoritmo -->
+  <section class="screen" id="B5">
+    <h2 class="screen-title">Algoritmo de índice de seguridad <span class="req-tag">RF-31</span></h2>
+    <div class="filters">
+      <select><option>Campus: Vicálvaro</option><option>Campus: Móstoles</option></select>
+      <select><option>Lunes-Viernes</option><option>Fin de semana</option></select>
+      <select><option>Diurno (08-20h)</option><option>Nocturno (20-08h)</option></select>
+    </div>
+    <div class="weight-row">
+      <label>Peso Iluminación <span class="value" id="wIlumVal">40%</span></label>
+      <input type="range" min="0" max="100" value="40" oninput="updateWeight('wIlumVal', this.value)">
+    </div>
+    <div class="weight-row">
+      <label>Peso Afluencia <span class="value" id="wAflVal">30%</span></label>
+      <input type="range" min="0" max="100" value="30" oninput="updateWeight('wAflVal', this.value)">
+    </div>
+    <div class="weight-row">
+      <label>Peso Incidencias <span class="value" id="wIncVal">30%</span></label>
+      <input type="range" min="0" max="100" value="30" oninput="updateWeight('wIncVal', this.value)">
+    </div>
+    <button class="btn" onclick="showToast('Pesos actualizados sin necesidad de nueva versión (RNF-18)')">Guardar configuración</button>
+  </section>
+
+  <!-- B6 Configuración general -->
+  <section class="screen" id="B6">
+    <h2 class="screen-title">Configuración general <span class="req-tag">RF-18 RF-19</span></h2>
+    <label>Umbral de desvío para prealerta (metros) <span class="req-tag">RF-19</span></label>
+    <input type="number" value="2" min="1" max="20">
+    <label>Horario de apertura del campus <span class="req-tag">RF-18</span></label>
+    <div class="grid-2">
+      <input type="text" value="06:00" placeholder="Apertura">
+      <input type="text" value="23:30" placeholder="Cierre">
+    </div>
+    <label>Inactividad máxima de sesión (minutos) <span class="req-tag">RNF-09</span></label>
+    <input type="number" value="15" min="1">
+    <label>Red de caminos internos del campus <span class="req-tag">RNF-21</span></label>
+    <button class="btn secondary" onclick="showToast('Archivo de red interna cargado (simulado)')">📤 Cargar/actualizar red de caminos (.geojson)</button>
+    <button class="btn" onclick="showToast('Configuración guardada')">Guardar configuración</button>
+  </section>
+
+  <!-- B7 Log auditoría -->
+  <section class="screen" id="B7">
+    <h2 class="screen-title">Log de auditoría <span class="req-tag">RF-43 RNF-10</span></h2>
+    <p class="subtitle">Acciones desde cuentas institucionales compartidas (servicio de seguridad del campus)</p>
+    <table>
+      <thead><tr><th>Usuario</th><th>Acción</th><th>Fecha/Hora</th></tr></thead>
+      <tbody>
+        <tr><td>seguridad.vicalvaro</td><td>Consulta de incidencia INC-014</td><td>28/08/2026 22:14</td></tr>
+        <tr><td>seguridad.mostoles</td><td>Cierre de incidencia INC-009</td><td>28/08/2026 19:02</td></tr>
+        <tr><td>seguridad.vicalvaro</td><td>Acceso al panel de alertas activas</td><td>27/08/2026 23:47</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Nav lateral admin -->
+  <nav class="bottom-nav" id="bottomNavAdmin" style="display:none;">
+    <button class="nav-item active" data-nav="B2" onclick="goScreen('B2')"><span class="ic">🗂️</span>Incidencias</button>
+    <button class="nav-item" data-nav="B4" onclick="goScreen('B4')"><span class="ic">📊</span>Informes</button>
+    <button class="nav-item" data-nav="B5" onclick="goScreen('B5')"><span class="ic">🧮</span>Algoritmo</button>
+    <button class="nav-item" data-nav="B6" onclick="goScreen('B6')"><span class="ic">⚙️</span>General</button>
+    <button class="nav-item" data-nav="B7" onclick="goScreen('B7')"><span class="ic">📋</span>Auditoría</button>
+  </nav>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ ESTADO Y DATOS DE EJEMPLO ============ */
+const state = {
+  mode:'app',
+  currentUser:null,
+  isFirstLogin:true,
+  waitTime:30,
+  countdownTimer:null,
+  countdownValue:30,
+  contacts:[
+    {name:'Ana Pérez', email:'ana.perez@urjc.es'},
+    {name:'Luis Gómez', email:'luis.gomez@urjc.es'}
+  ],
+  history:[
+    {date:'20/08/2026', from:'Facultad CC. Jurídicas', to:'Parada de bus', dist:'1.2 km', time:'14 min'},
+    {date:'15/08/2026', from:'Biblioteca', to:'Residencia', dist:'0.8 km', time:'9 min'}
+  ],
+  routes:[
+    {name:'Ruta A - Paseo principal', score:88, dist:'0.9 km', time:'11 min'},
+    {name:'Ruta B - Camino interior', score:71, dist:'1.1 km', time:'13 min'},
+    {name:'Ruta C - Vía secundaria', score:54, dist:'0.7 km', time:'9 min'}
+  ],
+  incidents:[
+    {id:'INC-001', loc:'Paseo del Bosque, Vicálvaro', date:'25/08/2026', gravedad:'alta', estado:'abierta',
+     desc:'Farola apagada en tramo central, poca visibilidad nocturna.',
+     history:[{estado:'abierta', ts:'25/08/2026 21:03'}]},
+    {id:'INC-002', loc:'Aparcamiento Norte, Móstoles', date:'22/08/2026', gravedad:'media', estado:'en curso',
+     desc:'Obstáculo (contenedor) bloquea parcialmente el camino accesible.',
+     history:[{estado:'abierta', ts:'22/08/2026 09:12'},{estado:'en curso', ts:'23/08/2026 10:00'}]},
+    {id:'INC-003', loc:'Entrada Este, Fuenlabrada', date:'18/08/2026', gravedad:'baja', estado:'resuelta',
+     desc:'Presencia de grupo ruidoso, sin incidentes reportados posteriormente.',
+     history:[{estado:'abierta', ts:'18/08/2026 23:40'},{estado:'en curso', ts:'19/08/2026 08:00'},{estado:'resuelta', ts:'19/08/2026 12:30'}]}
+  ],
+  volunteerRequests:[
+    {name:'María Ruiz', route:'Biblioteca → Residencia', time:'19:30'},
+    {name:'Carlos Díaz', route:'Facultad → Parada bus', time:'21:10'}
+  ]
+};
+let currentIncidentIndex = null;
+
+/* ============ NAVEGACIÓN ============ */
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  const navBtn = document.querySelector(`.nav-item[data-nav="${id}"]`);
+  if(navBtn) navBtn.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function setMode(mode){
+  state.mode = mode;
+  const shell = document.getElementById('appShell');
+  document.getElementById('btnModeApp').classList.toggle('active', mode==='app');
+  document.getElementById('btnModeAdmin').classList.toggle('active', mode==='admin');
+  document.getElementById('bottomNavApp').style.display = mode==='app' ? 'flex':'none';
+  document.getElementById('bottomNavAdmin').style.display = mode==='admin' ? 'flex':'none';
+  shell.classList.toggle('wide', mode==='admin');
+  if(mode==='app'){ goScreen('A1'); }
+  else { goScreen('B1'); renderIncidentTable(); renderHeatmap(); }
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ============ A1 / A2 LOGIN Y ONBOARDING (RF-34 RF-45 RNF-13) ============ */
+function login(){
+  state.currentUser = 'estudiante@urjc.es';
+  document.getElementById('userNameA3').textContent = state.currentUser;
+  document.getElementById('profileEmail').textContent = state.currentUser;
+  if(state.isFirstLogin){
+    goScreen('A2');
+  } else {
+    goScreen('A3');
+  }
+}
+function finishOnboarding(){
+  state.isFirstLogin = false;
+  showToast('Preferencias de accesibilidad guardadas');
+  goScreen('A3');
+}
+function logout(){
+  state.currentUser = null;
+  goScreen('A1');
+}
+
+/* ============ A3/A4 BÚSQUEDA Y RESULTADOS (RF-01 RF-02 RF-03 RF-08 RF-18) ============ */
+function calcularRuta(){
+  const origen = document.getElementById('origenInput').value.trim();
+  const destino = document.getElementById('destinoInput').value.trim();
+  const hourNow = new Date().getHours();
+  // Simulación fuera de horario (demo): si el destino contiene "cerrado"
+  if(destino.toLowerCase().includes('cerrado')){
+    document.getElementById('noRouteMsg').innerHTML =
+      'La solicitud se realiza fuera del horario de apertura configurado para el campus. <span class="req-tag">RF-18</span>';
+    goScreen('A4b'); return;
+  }
+  if(!origen || !destino){
+    document.getElementById('noRouteMsg').innerHTML =
+      'No existe ninguna ruta disponible entre el origen y el destino seleccionados. <span class="req-tag">RF-08</span>';
+    goScreen('A4b'); return;
+  }
+  renderRoutes();
+  // Simulación aleatoria de caída de Lumen Smart (RF-33)
+  const lumenDown = Math.random() < 0.15;
+  document.getElementById('lumenBanner').innerHTML = lumenDown
+    ? `<div class="banner danger">No se puede garantizar la seguridad de esta ruta: el servicio Lumen Smart no está respondiendo. <span class="req-tag">RF-33 RNF-16</span></div>`
+    : '';
+  goScreen('A4');
+}
+function renderRoutes(){
+  const el = document.getElementById('rutasList');
+  el.innerHTML = state.routes.map((r,i)=>{
+    const cls = r.score>=75?'score-high':(r.score>=50?'score-mid':'score-low');
+    return `<div class="card route-card clickable" onclick="iniciarTrayecto(${i})">
+      <div class="route-info">
+        <strong>${r.name}</strong><br>
+        <span style="font-size:12px;color:var(--muted);">${r.dist} · ${r.time}</span>
+      </div>
+      <div class="route-score ${cls}">${r.score}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ============ A5/A5b TRAYECTO ACTIVO Y ALERTAS (RF-04 RF-05 RF-06 RF-19 RF-20 RF-21 RF-22 RF-36) ============ */
+let arrivalTimer=null;
+function iniciarTrayecto(i){
+  goScreen('A5');
+  document.getElementById('btnConfirmarLlegada').disabled = true;
+  document.getElementById('alertBox5').innerHTML='';
+  // Simula acercamiento al destino: habilita confirmación a los 4s (representa 50m, RF-06)
+  clearTimeout(arrivalTimer);
+  arrivalTimer = setTimeout(()=>{
+    document.getElementById('btnConfirmarLlegada').disabled = false;
+    document.getElementById('etaText').textContent = 'Has llegado a 50 m del destino. Confirma tu llegada.';
+    showToast('Solicitud de confirmación de llegada (RF-06)');
+  }, 4000);
+}
+function confirmarLlegada(){
+  showToast('Llegada confirmada. Trayecto añadido al historial.');
+  state.history.unshift({date:new Date().toLocaleDateString('es-ES'), from:document.getElementById('origenInput').value, to:document.getElementById('destinoInput').value, dist:'0.9 km', time:'11 min'});
+  goScreen('A3');
+}
+function simularDesvio(){
+  lanzarAlerta('Te has desviado más de 2 metros de la ruta activa.');
+}
+function simularSinConexion(){
+  lanzarAlerta('Se ha perdido la conectividad de red durante el trayecto.');
+}
+function lanzarAlerta(msg){
+  document.getElementById('alertReasonText').textContent = msg;
+  state.countdownValue = state.waitTime || 30;
+  document.getElementById('countdownText').textContent = state.countdownValue;
+  document.getElementById('shareLocInfo').style.display='none';
+  goScreen('A5b');
+  clearInterval(state.countdownTimer);
+  state.countdownTimer = setInterval(()=>{
+    state.countdownValue--;
+    document.getElementById('countdownText').textContent = state.countdownValue;
+    if(state.countdownValue<=0){
+      clearInterval(state.countdownTimer);
+      document.getElementById('shareLocInfo').style.display='block';
+      showToast('Alerta enviada a tus contactos de confianza (RF-13 RF-14)');
+    }
+  },1000);
+}
+function cancelarAlerta(){
+  clearInterval(state.countdownTimer);
+  document.getElementById('shareLocInfo').style.display='none';
+  showToast('Alerta cancelada. Se ha notificado al contacto de confianza. (RF-21 RF-22)');
+  goScreen('A5');
+}
+
+/* ============ A6 INCIDENCIAS (RF-07 RF-27) ============ */
+function enviarIncidencia(){
+  const desc = document.getElementById('incDesc').value.trim();
+  if(!desc){ showToast('Describe la incidencia antes de enviar'); return; }
+  showToast('Incidencia registrada correctamente (RF-07)');
+  document.getElementById('incDesc').value='';
+  goScreen(document.getElementById('A5').classList.contains('active') ? 'A5' : 'A3');
+}
+
+/* ============ A7 CONTACTOS (RF-12 RF-13) ============ */
+function renderContacts(){
+  document.getElementById('contactsList').innerHTML = state.contacts.map(c=>
+    `<div class="card">${c.name}<br><span class="badge-lang">${c.email}</span></div>`
+  ).join('');
+}
+function addContact(){
+  const email = document.getElementById('newContactEmail').value.trim();
+  if(!email.endsWith('@urjc.es')){
+    showToast('Solo se admiten contactos con cuenta institucional @urjc.es (RF-12)');
+    return;
+  }
+  state.contacts.push({name: email.split('@')[0], email});
+  document.getElementById('newContactEmail').value='';
+  renderContacts();
+  showToast('Contacto añadido');
+}
+
+/* ============ A8 HISTORIAL (RF-29) ============ */
+function renderHistory(){
+  document.getElementById('historyList').innerHTML = state.history.map(h=>
+    `<div class="card"><strong>${h.from} → ${h.to}</strong><br>
+     <span class="badge-lang">${h.date} · ${h.dist} · ${h.time}</span></div>`
+  ).join('');
+}
+
+/* ============ A9 PERFIL (RF-15 RF-16 RF-17 RF-20 RF-23) ============ */
+function saveProfile(){
+  state.waitTime = parseInt(document.getElementById('profWaitTime').value) || 30;
+  showToast('Perfil actualizado');
+}
+function toggleVoluntario(){
+  const on = document.getElementById('profVoluntario').checked;
+  showToast(on ? 'Registrado como voluntario (RF-23)' : 'Baja como voluntario');
+}
+
+/* ============ A10 VOLUNTARIADO (RF-24 RF-25 RF-40) ============ */
+function renderVolunteerRequests(){
+  const el = document.getElementById('volList');
+  if(state.volunteerRequests.length===0){
+    el.innerHTML = '<p class="subtitle">No hay solicitudes pendientes.</p>'; return;
+  }
+  el.innerHTML = state.volunteerRequests.map((r,i)=>`
+    <div class="card">
+      <strong>${r.name}</strong><br>
+      <span class="badge-lang">${r.route} · ${r.time}</span>
+      <div class="btn-row">
+        <button class="btn accent small" onclick="respondVolunteer(${i}, true)">Aceptar</button>
+        <button class="btn danger small" onclick="respondVolunteer(${i}, false)">Rechazar</button>
+      </div>
+    </div>`).join('');
+}
+function respondVolunteer(i, accepted){
+  showToast(accepted ? 'Solicitud aceptada' : 'Solicitud rechazada');
+  state.volunteerRequests.splice(i,1);
+  renderVolunteerRequests();
+}
+
+/* ============ B1 LOGIN ADMIN (RF-09 RF-34 RNF-07) ============ */
+function loginAdmin(){
+  showToast('Sesión de administración iniciada (rol PDI/PTGAS)');
+  goScreen('B2');
+}
+
+/* ============ B2/B3 INCIDENCIAS ADMIN (RF-09 RF-10 RF-11 RF-26 RF-28 RF-38 RNF-20) ============ */
+function renderIncidentTable(){
+  document.getElementById('incidentTableBody').innerHTML = state.incidents.map((inc,i)=>`
+    <tr class="clickable-row" onclick="openIncident(${i})">
+      <td>${inc.id}</td><td>${inc.loc}</td><td>${inc.date}</td>
+      <td>${inc.gravedad}</td>
+      <td><span class="status-pill pill-${inc.estado.replace(' ','_')}">${inc.estado}</span></td>
+    </tr>`).join('');
+}
+function openIncident(i){
+  currentIncidentIndex = i;
+  const inc = state.incidents[i];
+  document.getElementById('detIncTitle').textContent = `${inc.id} — ${inc.loc}`;
+  document.getElementById('detIncDesc').textContent = inc.desc;
+  document.getElementById('detGravedad').value = inc.gravedad;
+  document.getElementById('detEstado').value = inc.estado;
+  renderStatusHistory(inc);
+  goScreen('B3');
+}
+function renderStatusHistory(inc){
+  document.getElementById('statusHistory').innerHTML = inc.history.map(h=>
+    `<div>• <strong>${h.estado}</strong> — ${h.ts}</div>`).join('');
+}
+function registrarCambioEstado(){
+  const inc = state.incidents[currentIncidentIndex];
+  const nuevoEstado = document.getElementById('detEstado').value;
+  const now = new Date().toLocaleString('es-ES');
+  inc.history.push({estado:nuevoEstado, ts:now});
+  renderStatusHistory(inc);
+}
+function saveIncident(){
+  const inc = state.incidents[currentIncidentIndex];
+  inc.gravedad = document.getElementById('detGravedad').value;
+  inc.estado = document.getElementById('detEstado').value;
+  showToast(`Incidencia guardada. Ajuste al índice de seguridad: ${document.getElementById('detImpacto').value} pts (RF-26)`);
+  renderIncidentTable();
+  goScreen('B2');
+}
+
+/* ============ B4 INFORMES (RF-30) ============ */
+function renderHeatmap(){
+  const grid = document.getElementById('heatmapGrid');
+  const colors = ['#e6f6ec','#cdeedb','#a9e0c0','#f0d998','#f0c27a','#e6a06b','#e08b6b','#d97567','#c0392b'];
+  let html='';
+  for(let i=0;i<40;i++){
+    const c = colors[Math.floor(Math.random()*colors.length)];
+    html += `<div style="background:${c};"></div>`;
+  }
+  grid.innerHTML = html;
+}
+
+/* ============ B5 ALGORITMO (RF-31 RNF-18) ============ */
+function updateWeight(id, val){
+  document.getElementById(id).textContent = val + '%';
+}
+
+/* ============ INICIALIZACIÓN ============ */
+renderContacts();
+renderHistory();
+renderVolunteerRequests();
+setMode('app');
+</script>
+
+</body>
+</html>
