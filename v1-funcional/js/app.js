@@ -1,9 +1,9 @@
-/* Senda URJC v1 — aplicación de usuario (I3: + cálculo de rutas seguras con el índice). */
+/* Senda URJC v1 — aplicación de usuario (I4: + modo «Voy contigo» con prealerta, alerta y SOS). */
 
 (function () {
   "use strict";
 
-  let mapa, capaRutas, capaLuminarias;
+  let mapa, capaRutas, capaLuminarias, marcadorAvance;
   let rutasActuales = [];
   let rutaElegida = null;
   let horaSimulada = 21;
@@ -33,9 +33,8 @@
     document.getElementById("pantalla-login").hidden = true;
     document.getElementById("app").hidden = false;
     iniciarMapa();
-    montarVistaRutas();
+    montarVistas(email);
     Efemerides.inicializar(CAMPUS.centro[0], CAMPUS.centro[1]).then(refrescarEstado);
-    document.getElementById("hora-sim").addEventListener("input", ev => cambiarHora(parseFloat(ev.target.value)));
     cambiarHora(21);
   }
 
@@ -72,6 +71,22 @@
       }).bindTooltip(l.id + " · " + l.modelo + " · " + l.estado +
                      " · " + l.iluminancia_lux + " lux").addTo(capaLuminarias);
     });
+  }
+
+  /* ============ Vistas del panel lateral ============ */
+  function montarVistas(email) {
+    document.querySelectorAll(".nav-btn").forEach(b => {
+      b.addEventListener("click", () => {
+        document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("activo"));
+        document.querySelectorAll(".vista").forEach(x => x.classList.remove("activo"));
+        b.classList.add("activo");
+        document.getElementById("vista-" + b.dataset.vista).classList.add("activo");
+      });
+    });
+    montarVistaRutas();
+    montarVistaVoyContigo();
+    document.getElementById("btn-sos").addEventListener("click", accionSOS);
+    document.getElementById("hora-sim").addEventListener("input", ev => cambiarHora(parseFloat(ev.target.value)));
   }
 
   /* ---------- RF-02 / RF-03 / RF-21 — cálculo de rutas ---------- */
@@ -143,6 +158,9 @@
     rutaElegida = rutasActuales[i];
     document.querySelectorAll(".tarjeta-ruta").forEach((t, j) => t.classList.toggle("elegida", j === i));
     pintarRutas();
+    /* RF-13 / S-06: si hay trayecto activo, la nueva ruta re-ancla la supervisión sin alerta */
+    if (VoyContigo.estadoPublico().estado !== "inactivo") VoyContigo.recalcular(rutaElegida);
+    refrescarVoyContigo(VoyContigo.estadoPublico());
   }
 
   function pintarRutas() {
@@ -161,6 +179,104 @@
 
   function recalcularSiProcede() {
     if (rutasActuales.length) calcularYPintar();
+  }
+
+  /* ---------- CU-03 / CU-04 — Voy contigo ---------- */
+  function montarVistaVoyContigo() {
+    const v = document.getElementById("vista-voycontigo");
+    v.innerHTML = `
+      <h2>Voy contigo</h2>
+      <div id="vc-estado"></div>
+      <div id="vc-controles"></div>
+      <h3>Lo que ve tu contacto <span class="nota-req">vista simulada · RF-07</span></h3>
+      <ul class="feed" id="vc-feed"></ul>`;
+    VoyContigo.on(refrescarVoyContigo);
+    refrescarVoyContigo(VoyContigo.estadoPublico());
+  }
+
+  function refrescarVoyContigo(s) {
+    const est = document.getElementById("vc-estado");
+    const ctr = document.getElementById("vc-controles");
+    if (!est) return;
+
+    if (s.estado === "inactivo") {
+      est.innerHTML = `<p>Sin trayecto activo.</p>` +
+        (s.contacto
+          ? `<p class="chip chip-ok">Contacto de confianza: ${s.contacto}</p>`
+          : `<p class="chip chip-alerta">Sin contacto configurado — las alertas irían al Servicio de Seguridad (RF-12)</p>`);
+      ctr.innerHTML = `<button id="vc-iniciar" class="btn btn-primario" ${rutaElegida ? "" : "disabled"}>
+          Activar «Voy contigo» con la ruta elegida</button>
+        <p class="nota-req">${rutaElegida ? "Ruta elegida: ISP " + rutaElegida.isp + " · " + rutaElegida.distancia + " m" : "Primero calcula y elige una ruta en la pestaña Rutas."}</p>`;
+      const b = document.getElementById("vc-iniciar");
+      if (b) b.addEventListener("click", () => VoyContigo.iniciar(rutaElegida));
+    } else if (s.estado === "activo") {
+      est.innerHTML = `<p class="chip chip-ok">Trayecto en curso — ${Math.round(s.progreso * 100)} %</p>`;
+      ctr.innerHTML = `
+        <p>Simular una situación del protocolo de detección (CU-03):</p>
+        <button class="btn btn-suave" data-sim="desvio">Provocar desvío</button>
+        <button class="btn btn-suave" data-sim="parada">Provocar parada</button>
+        <button class="btn btn-suave" data-sim="cobertura">Perder cobertura</button>
+        <button id="vc-fin" class="btn btn-secundario" style="margin-top:10px">Finalizar trayecto</button>`;
+      ctr.querySelectorAll("[data-sim]").forEach(b =>
+        b.addEventListener("click", () => VoyContigo.simular(b.dataset.sim)));
+      document.getElementById("vc-fin").addEventListener("click", () => VoyContigo.finalizar("Trayecto finalizado por el usuario."));
+      quitarModal();
+      moverMarcadorAvance(s);
+    } else if (s.estado === "prealerta") {
+      mostrarModalPrealerta(s);
+    } else if (s.estado === "alerta") {
+      est.innerHTML = `<p class="chip chip-alerta">ALERTA activa — ${s.motivoPrealerta}</p>`;
+      ctr.innerHTML = `<button id="vc-ok" class="btn btn-primario">Estoy bien — cancelar la alerta</button>
+        <p class="nota-req">CU-04: el aviso de falsa alarma llega a quienes recibieron la alerta.</p>`;
+      document.getElementById("vc-ok").addEventListener("click", () => VoyContigo.cancelarAlerta());
+      quitarModal();
+    }
+
+    const feed = document.getElementById("vc-feed");
+    feed.innerHTML = s.feed.map(l =>
+      `<li><strong>${l.hora}</strong> — ${l.texto}</li>`).join("") || "<li>(sin eventos)</li>";
+  }
+
+  function moverMarcadorAvance(s) {
+    if (!s.ruta) return;
+    const coords = Router.coordsDeRuta(s.ruta);
+    const idx = Math.min(coords.length - 1, Math.floor(s.progreso * (coords.length - 1)));
+    const punto = coords[idx];
+    if (!marcadorAvance) {
+      marcadorAvance = L.circleMarker(punto, { radius: 9, color: "#CB0017", fillColor: "#fff", fillOpacity: 1, weight: 4 }).addTo(mapa);
+    } else marcadorAvance.setLatLng(punto);
+  }
+
+  function mostrarModalPrealerta(s) {
+    let m = document.getElementById("modal-prealerta");
+    if (!m) {
+      document.getElementById("capa-modales").innerHTML = `
+        <div class="modal-fondo" id="modal-prealerta">
+          <div class="modal modal-prealerta" role="alertdialog" aria-labelledby="pa-titulo">
+            <h2 id="pa-titulo">¿Está todo bien?</h2>
+            <p id="pa-motivo"></p>
+            <div class="cuenta-atras" id="pa-cuenta"></div>
+            <p>Si no confirmas, se avisará automáticamente a <strong id="pa-destino"></strong>.</p>
+            <div class="acciones">
+              <button id="pa-ok" class="btn btn-primario">Estoy bien</button>
+            </div>
+            <p class="nota-req">RF-12 · prealerta con vibración y aviso (RF-11); plazo configurable</p>
+          </div>
+        </div>`;
+      document.getElementById("pa-ok").addEventListener("click", () => VoyContigo.confirmarOk());
+    }
+    document.getElementById("pa-motivo").textContent = s.motivoPrealerta +
+      (s.sinCobertura ? " (sin cobertura: prealerta local, se sincronizará al recuperar señal)" : "");
+    document.getElementById("pa-cuenta").textContent = s.restante + " s";
+    document.getElementById("pa-destino").textContent = s.contacto || "el Servicio de Seguridad del campus";
+  }
+
+  function quitarModal() { document.getElementById("capa-modales").innerHTML = ""; }
+
+  function accionSOS() {
+    if (!VoyContigo.sos()) {
+      alert("El botón SOS actúa durante un trayecto. Activa «Voy contigo» primero (demo).");
+    }
   }
 
   /* ---------- Hora simulada, efemérides y barra de estado ---------- */
