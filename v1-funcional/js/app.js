@@ -1,4 +1,4 @@
-﻿/* Senda URJC v1 — aplicación de usuario (orquestación de la interfaz).
+/* Senda URJC v1 — aplicación de usuario (orquestación de la interfaz).
    Cada bloque lleva su trazabilidad a la ERS tradicional (RF-XX / RNF-XX / CU-XX). */
 
 (function () {
@@ -203,6 +203,7 @@
     if (!est) return;
 
     if (s.estado === "inactivo") {
+      if (marcadorAvance) { mapa.removeLayer(marcadorAvance); marcadorAvance = null; }  // corrección I6
       est.innerHTML = `<p>Sin trayecto activo.</p>` +
         (s.contacto
           ? `<p class="chip chip-ok">Contacto de confianza: ${s.contacto}</p>`
