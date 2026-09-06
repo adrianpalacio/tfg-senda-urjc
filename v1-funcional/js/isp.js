@@ -48,7 +48,10 @@ const ISP = (() => {
     if (alertas.some(a => a.tipo === "APAGON" && a.zona === tramo.zona)) return 0;   // IEXT-05
     alertas.filter(a => a.tipo === "AVERIA" && a.tramo === tramo.id)
            .forEach(() => { e -= cfg.penalizacionAveria; });
-    /* (I5 añadirá aquí las incidencias reportadas con grado asignado — RF-16 / S-12) */
+    /* Incidencias reportadas con grado asignado por la administración (RF-16 / S-12) */
+    Incidencias.activasConGrado()
+      .filter(t => t.zona === tramo.zona)
+      .forEach(t => { e -= (t.gravedad === "grave" ? 55 : 25); });
     return Math.max(0, e);
   }
 

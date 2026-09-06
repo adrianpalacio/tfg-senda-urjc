@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Senda URJC — Panel de administración</title>
+<link rel="icon" href="assets/urjc-simbolo.png">
+<link rel="stylesheet" href="css/senda.css">
+</head>
+<body>
+
+<header class="cabecera">
+  <div class="cabecera-marca">
+    <img src="assets/urjc-simbolo-neg.png" alt="URJC" class="cabecera-logo">
+    <span class="cabecera-titulo">Senda URJC · Administración</span>
+  </div>
+  <nav class="cabecera-nav" aria-label="Secciones"></nav>
+  <div class="cabecera-acciones">
+    <a class="enlace-admin" href="index.html">← Volver a la aplicación</a>
+  </div>
+</header>
+
+<div class="admin-grid">
+  <div>
+    <div class="caja">
+      <h2>Tickets de incidencias <span class="nota-req">RF-17 · RF-18 · ciclo abierto → en curso → resuelto</span></h2>
+      <p class="nota-req">Los reportes subjetivos no penalizan el índice hasta que se les asigna un
+      grado aquí (RF-16, regla validada con el cliente). Al resolver, se notifica a quien reportó (RF-18).</p>
+      <table class="tabla" id="tabla-tickets">
+        <thead>
+          <tr><th>Ticket</th><th>Tipo</th><th>Zona</th><th>Estado</th><th>Gravedad</th><th>Acciones</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="caja" style="margin-top:18px">
+      <h2>Alertas de LumenSmart <span class="nota-req">GET /alertas (mock, IEXT-04)</span></h2>
+      <ul class="feed" id="lista-alertas"></ul>
+    </div>
+  </div>
+
+  <div>
+    <div class="caja">
+      <h2>Parámetros del índice <span class="nota-req">RF-20 · pesos y umbrales configurables (S-08 / D-B)</span></h2>
+      <div class="pesos-fila"><label for="peso-i">Iluminación</label>
+        <input type="range" id="peso-i" min="0" max="100" value="33"><output id="out-i">33 %</output></div>
+      <div class="pesos-fila"><label for="peso-a">Afluencia</label>
+        <input type="range" id="peso-a" min="0" max="100" value="33"><output id="out-a">33 %</output></div>
+      <div class="pesos-fila"><label for="peso-e">Entorno</label>
+        <input type="range" id="peso-e" min="0" max="100" value="33"><output id="out-e">33 %</output></div>
+      <p class="nota-req">Los tres pesos se normalizan para sumar 100 % (fórmula F3 §8).</p>
+      <label for="umbral">Umbral crítico de tramo (ruta «no segura» si baja de este ISP)</label>
+      <input type="number" id="umbral" min="0" max="100">
+      <label for="pen-averia">Penalización por avería en el tramo (puntos de E)</label>
+      <input type="number" id="pen-averia" min="0" max="100">
+      <button id="guardar-params" class="btn btn-primario" style="margin-top:12px">Guardar parámetros</button>
+      <p id="params-aviso" class="nota-req"></p>
+    </div>
+    <div class="caja" style="margin-top:18px">
+      <h2>Estadísticas <span class="nota-req">RF-19 — anonimizadas (RNF-03)</span></h2>
+      <div class="kpis" id="kpis"></div>
+      <div id="stats-categorias"></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/campus-data.js"></script>
+<script src="js/efemerides.js"></script>
+<script src="js/lumen-mock.js"></script>
+<script src="js/incidencias.js"></script>
+<script src="js/isp.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

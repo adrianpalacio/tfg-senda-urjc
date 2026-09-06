@@ -1,4 +1,5 @@
-/* Senda URJC v1 — aplicación de usuario (I4: + modo «Voy contigo» con prealerta, alerta y SOS). */
+﻿/* Senda URJC v1 — aplicación de usuario (orquestación de la interfaz).
+   Cada bloque lleva su trazabilidad a la ERS tradicional (RF-XX / RNF-XX / CU-XX). */
 
 (function () {
   "use strict";
@@ -31,7 +32,8 @@
 
   function arrancarApp(email) {
     document.getElementById("pantalla-login").hidden = true;
-    document.getElementById("app").hidden = false;
+    const app = document.getElementById("app");
+    app.hidden = false;
     iniciarMapa();
     montarVistas(email);
     Efemerides.inicializar(CAMPUS.centro[0], CAMPUS.centro[1]).then(refrescarEstado);
@@ -57,8 +59,8 @@
     capaRutas = L.layerGroup().addTo(mapa);
     pintarLuminarias();
 
-    LumenMock.on("zona.apagon", () => { pintarLuminarias(); recalcularSiProcede(); });
-    LumenMock.on("luminaria.estado.cambio", () => { pintarLuminarias(); recalcularSiProcede(); });
+    LumenMock.on("zona.apagon", () => { pintarLuminarias(); recalcularSiProcede(true); });
+    LumenMock.on("luminaria.estado.cambio", () => { pintarLuminarias(); recalcularSiProcede(true); });
   }
 
   function pintarLuminarias() {
@@ -85,6 +87,8 @@
     });
     montarVistaRutas();
     montarVistaVoyContigo();
+    montarVistaIncidencias(email);
+    montarVistaPerfil(email);
     document.getElementById("btn-sos").addEventListener("click", accionSOS);
     document.getElementById("hora-sim").addEventListener("input", ev => cambiarHora(parseFloat(ev.target.value)));
   }
@@ -160,7 +164,6 @@
     pintarRutas();
     /* RF-13 / S-06: si hay trayecto activo, la nueva ruta re-ancla la supervisión sin alerta */
     if (VoyContigo.estadoPublico().estado !== "inactivo") VoyContigo.recalcular(rutaElegida);
-    refrescarVoyContigo(VoyContigo.estadoPublico());
   }
 
   function pintarRutas() {
@@ -177,8 +180,8 @@
     });
   }
 
-  function recalcularSiProcede() {
-    if (rutasActuales.length) calcularYPintar();
+  function recalcularSiProcede(refrescarTarjetas) {
+    if (rutasActuales.length && refrescarTarjetas) calcularYPintar();
   }
 
   /* ---------- CU-03 / CU-04 — Voy contigo ---------- */
@@ -260,7 +263,7 @@
             <div class="acciones">
               <button id="pa-ok" class="btn btn-primario">Estoy bien</button>
             </div>
-            <p class="nota-req">RF-12 · prealerta con vibración y aviso (RF-11); plazo configurable</p>
+            <p class="nota-req">RF-12 · prealerta con vibración y aviso (RF-11); plazo configurable en Perfil</p>
           </div>
         </div>`;
       document.getElementById("pa-ok").addEventListener("click", () => VoyContigo.confirmarOk());
@@ -279,6 +282,90 @@
     }
   }
 
+  /* ---------- RF-15..RF-18 — incidencias ---------- */
+  function montarVistaIncidencias(email) {
+    const v = document.getElementById("vista-incidencias");
+    const cats = Incidencias.CATEGORIAS.map(c =>
+      `<option value="${c.id}">${c.nombre}</option>`).join("");
+    const zonas = ZONAS.map(z => `<option value="${z.id}">${z.nombre}</option>`).join("");
+    v.innerHTML = `
+      <h2>Reportar incidencia</h2>
+      <label for="inc-cat">Tipo <span class="nota-req">RF-15 (categorías del enunciado)</span></label>
+      <select id="inc-cat">${cats}</select>
+      <label for="inc-zona">Zona del campus</label>
+      <select id="inc-zona">${zonas}</select>
+      <label for="inc-desc">Descripción (opcional)</label>
+      <input type="text" id="inc-desc" maxlength="300" placeholder="Qué has visto">
+      <button id="inc-enviar" class="btn btn-primario">Enviar reporte</button>
+      <p class="nota-req">El reporte genera un ticket en el panel (RF-17). Los reportes subjetivos
+      solo penalizan el índice cuando la administración les asigna grado (RF-16, regla validada
+      con el cliente). Recibirás aviso al resolverse (RF-18).</p>
+      <div id="inc-resultado"></div>
+      <h3>Mis reportes</h3>
+      <ul class="feed" id="inc-lista"></ul>`;
+    document.getElementById("inc-enviar").addEventListener("click", () => {
+      const t = Incidencias.reportar({
+        categoria: document.getElementById("inc-cat").value,
+        zona: document.getElementById("inc-zona").value,
+        descripcion: document.getElementById("inc-desc").value,
+        autor: email
+      });
+      document.getElementById("inc-resultado").innerHTML =
+        `<p class="chip chip-ok">Ticket ${t.id} creado — estado: abierto</p>`;
+      refrescarMisReportes(email);
+    });
+    refrescarMisReportes(email);
+  }
+
+  function refrescarMisReportes(email) {
+    const ul = document.getElementById("inc-lista");
+    const mias = Incidencias.todas().filter(t => t.autor === email).reverse();
+    ul.innerHTML = mias.map(t =>
+      `<li><strong>${t.id}</strong> · ${Incidencias.nombreCategoria(t.categoria)} · ${t.zona}
+        — <span class="estado-${t.estado.replace(" ", "")}">${t.estado}</span>
+        ${t.gravedad ? " · gravedad " + t.gravedad : ""}</li>`).join("") || "<li>(ninguno)</li>";
+  }
+
+  /* ---------- RF-09 / RF-10 / S-05 — perfil ---------- */
+  function montarVistaPerfil(email) {
+    const v = document.getElementById("vista-perfil");
+    const perfil = leerPerfil();
+    const cfg = ISP.config();
+    v.innerHTML = `
+      <h2>Perfil</h2>
+      <p><strong>${email}</strong></p>
+      <label for="pf-contacto">Contacto de confianza <span class="nota-req">RF-09 — uno por usuario, cambiable; solo comunidad URJC</span></label>
+      <input type="email" id="pf-contacto" placeholder="contacto@urjc.es" value="${perfil.contacto || ""}">
+      <label for="pf-plazo">Plazo de confirmación de la prealerta (segundos) <span class="nota-req">S-05: lo ajusta el usuario</span></label>
+      <input type="number" id="pf-plazo" min="10" max="120" value="${cfg.plazoConfirmacion}">
+      <label><input type="checkbox" id="pf-voluntario" ${perfil.voluntario ? "checked" : ""}>
+        Quiero ser voluntario de acompañamiento <span class="nota-req">RF-10 — sin aprobación previa</span></label>
+      <button id="pf-guardar" class="btn btn-primario">Guardar</button>
+      <p id="pf-aviso" class="nota-req"></p>
+      <h3>Privacidad</h3>
+      <p class="nota-req">El historial de rutas se elimina a las 24 h salvo incidencia de seguridad
+      (RNF-02). Estadísticas siempre anonimizadas (RNF-03). Sesión persistente de 30 días.</p>`;
+    document.getElementById("pf-guardar").addEventListener("click", () => {
+      const contacto = document.getElementById("pf-contacto").value.trim().toLowerCase();
+      const aviso = document.getElementById("pf-aviso");
+      if (contacto && !/@(alumnos\.)?urjc\.es$/.test(contacto)) {
+        aviso.textContent = "El contacto debe ser de la comunidad URJC (RF-09).";
+        return;
+      }
+      guardarPerfil({ contacto: contacto || null,
+                      voluntario: document.getElementById("pf-voluntario").checked });
+      ISP.guardarConfig({ plazoConfirmacion: Math.max(10, Math.min(120,
+        parseInt(document.getElementById("pf-plazo").value, 10) || 30)) });
+      aviso.textContent = "Guardado.";
+      refrescarVoyContigo(VoyContigo.estadoPublico());
+    });
+  }
+
+  function leerPerfil() {
+    try { return JSON.parse(localStorage.getItem("senda.perfil")) || {}; } catch (e) { return {}; }
+  }
+  function guardarPerfil(p) { localStorage.setItem("senda.perfil", JSON.stringify({ ...leerPerfil(), ...p })); }
+
   /* ---------- Hora simulada, efemérides y barra de estado ---------- */
   function cambiarHora(h) {
     horaSimulada = h;
@@ -287,7 +374,7 @@
     document.getElementById("hora-sim-out").textContent = Efemerides.formatoHora(h);
     pintarLuminarias();
     refrescarEstado();
-    recalcularSiProcede();
+    recalcularSiProcede(true);
   }
 
   function refrescarEstado() {

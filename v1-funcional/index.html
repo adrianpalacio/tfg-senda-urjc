@@ -40,16 +40,22 @@
     <nav class="cabecera-nav" aria-label="Secciones">
       <button class="nav-btn activo" data-vista="rutas">Rutas</button>
       <button class="nav-btn" data-vista="voycontigo">Voy contigo</button>
+      <button class="nav-btn" data-vista="incidencias">Incidencias</button>
+      <button class="nav-btn" data-vista="perfil">Perfil</button>
     </nav>
     <div class="cabecera-acciones">
+      <a class="enlace-admin" href="admin.html" title="Panel de administración (PDI/PTGAS)">Administración</a>
       <button id="btn-sos" class="btn-sos" title="Botón de emergencia (RF-14)">SOS</button>
     </div>
   </header>
 
   <div class="cuerpo">
     <aside class="panel-lateral" id="panel-lateral">
+      <!-- Las vistas se montan desde app.js -->
       <section id="vista-rutas" class="vista activo"></section>
       <section id="vista-voycontigo" class="vista"></section>
+      <section id="vista-incidencias" class="vista"></section>
+      <section id="vista-perfil" class="vista"></section>
     </aside>
     <main class="zona-mapa">
       <div id="mapa" role="application" aria-label="Mapa del campus"></div>
@@ -75,6 +81,7 @@
 <script src="js/lumen-mock.js"></script>
 <script src="js/isp.js"></script>
 <script src="js/router.js"></script>
+<script src="js/incidencias.js"></script>
 <script src="js/voycontigo.js"></script>
 <script src="js/app.js"></script>
 </body>
