@@ -9,33 +9,53 @@
   let rutaElegida = null;
   let horaSimulada = 21;
 
-  /* ============ RF-01 — acceso con cuenta corporativa (LDAP/SSO simulado) ============ */
+  /* ============ RF-01 — acceso con cuenta corporativa (LDAP/SSO simulado) ============
+     Endurecido tras la incidencia reportada por el cliente (no conseguía pasar del login):
+     cualquier fallo interno se muestra en pantalla en lugar de dejar el formulario mudo,
+     el almacenamiento local es opcional (navegadores que lo bloquean) y Leaflet se sirve
+     desde el propio repositorio para no depender de un CDN externo. */
+  function guardarLocal(clave, valor) {
+    try { localStorage.setItem(clave, valor); } catch (e) { /* almacenamiento bloqueado: sesión solo en memoria */ }
+  }
+
   const formLogin = document.getElementById("form-login");
   formLogin.addEventListener("submit", ev => {
     ev.preventDefault();
-    const email = document.getElementById("login-email").value.trim().toLowerCase();
     const error = document.getElementById("login-error");
-    if (!/@(alumnos\.)?urjc\.es$/.test(email)) {
-      error.textContent = "Solo se admiten cuentas corporativas @urjc.es o @alumnos.urjc.es (RF-01).";
+    try {
+      const email = document.getElementById("login-email").value.trim().toLowerCase();
+      if (!/@(alumnos\.)?urjc\.es$/.test(email)) {
+        error.textContent = "Solo se admiten cuentas corporativas @urjc.es o @alumnos.urjc.es (RF-01).";
+        error.hidden = false;
+        return;
+      }
+      guardarLocal("senda.sesion", JSON.stringify({ email, inicio: Date.now() }));
+      arrancarApp(email);
+    } catch (e) {
+      error.textContent = "No se pudo iniciar la aplicación (" + e.message + "). Recarga la página e inténtalo de nuevo.";
       error.hidden = false;
-      return;
     }
-    localStorage.setItem("senda.sesion", JSON.stringify({ email, inicio: Date.now() }));
-    arrancarApp(email);
   });
 
   const sesion = (() => {
     try { return JSON.parse(localStorage.getItem("senda.sesion")); } catch (e) { return null; }
   })();
   /* RNF: sesión persistente de 30 días (decisión documentada) */
-  if (sesion && Date.now() - sesion.inicio < 30 * 86400000) arrancarApp(sesion.email);
+  if (sesion && Date.now() - sesion.inicio < 30 * 86400000) {
+    try { arrancarApp(sesion.email); } catch (e) { /* si falla, se queda el login visible */ }
+  }
 
   function arrancarApp(email) {
     document.getElementById("pantalla-login").hidden = true;
     const app = document.getElementById("app");
     app.hidden = false;
-    iniciarMapa();
     montarVistas(email);
+    try {
+      iniciarMapa();
+    } catch (e) {
+      document.getElementById("barra-estado").textContent =
+        "El mapa no ha podido iniciarse (" + e.message + "); el resto de la aplicación sigue operativo.";
+    }
     Efemerides.inicializar(CAMPUS.centro[0], CAMPUS.centro[1]).then(refrescarEstado);
     cambiarHora(21);
   }
@@ -64,6 +84,7 @@
   }
 
   function pintarLuminarias() {
+    if (!capaLuminarias) return;
     capaLuminarias.clearLayers();
     LumenMock.listarLuminarias().forEach(l => {
       const color = l.estado === "ENCENDIDA" ? "#F5C518" :
@@ -167,6 +188,7 @@
   }
 
   function pintarRutas() {
+    if (!capaRutas) return;
     capaRutas.clearLayers();
     const cfg = ISP.config();
     rutasActuales.forEach((r, i) => {
@@ -242,7 +264,7 @@
   }
 
   function moverMarcadorAvance(s) {
-    if (!s.ruta) return;
+    if (!s.ruta || !mapa) return;
     const coords = Router.coordsDeRuta(s.ruta);
     const idx = Math.min(coords.length - 1, Math.floor(s.progreso * (coords.length - 1)));
     const punto = coords[idx];
