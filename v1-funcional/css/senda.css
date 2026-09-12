@@ -22,6 +22,7 @@ body {
 }
 
 /* ---------- Login ---------- */
+.pantalla-login[hidden] { display: none; }
 .pantalla-login {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
   background: linear-gradient(160deg, var(--urjc-rojo) 0%, var(--urjc-rojo-oscuro) 70%);

@@ -11,19 +11,30 @@ interno puede dejar el formulario mudo."
 
 ## Diagnóstico
 
-Se reprodujo un bloqueo en el primer acceso con caché fría. Las causas plausibles
-identificadas, todas compatibles con el síntoma:
+El problema se reprodujo en la versión desplegada y resultaron ser dos defectos encadenados:
 
-- La biblioteca de mapas se cargaba desde un CDN externo (unpkg). En una primera visita, o
-  detrás de un proxy corporativo que la bloquee o retrase, la aplicación quedaba a expensas
-  de esa descarga y un fallo dejaba el formulario sin respuesta visible.
-- El guardado de la sesión usaba el almacenamiento local sin protección; en navegadores que
-  lo bloquean (modo privado, políticas de empresa), la excepción cortaba el arranque antes
-  de mostrar nada.
-- Cualquier error interno del arranque se producía sin mensaje para el usuario.
+1. **Trampa visual en el formulario**: el campo de contraseña tenía como *placeholder* una
+   fila de puntos (••••••••), que parece una contraseña ya escrita. El usuario rellenaba su
+   correo, daba la contraseña por rellena y pulsaba «Entrar»; el navegador bloqueaba el envío
+   por el atributo `required` con un aviso efímero, y el formulario parecía no responder.
+2. **La pantalla de acceso no se ocultaba nunca**: al entrar, el código marcaba la pantalla
+   con el atributo `hidden`, pero una regla de estilo propia (`display: flex`) tiene más
+   prioridad que ese atributo, de modo que incluso con las credenciales correctas la pantalla
+   de acceso seguía tapando la aplicación.
+
+Durante el diagnóstico se identificaron además tres fragilidades adicionales, compatibles con
+el mismo síntoma en otros entornos: la dependencia de un CDN externo para la biblioteca de
+mapas, el guardado de sesión sin protección frente a navegadores con el almacenamiento local
+bloqueado, y la ausencia de mensajes visibles ante errores internos del arranque.
 
 ## Correcciones aplicadas
 
+- **Campo de contraseña sin trampa visual**: el *placeholder* de puntos se sustituye
+  por un texto explícito («Escribe cualquier contraseña»), la etiqueta aclara que es una demo
+  y el campo deja de ser obligatorio, de modo que el acceso solo depende del correo.
+- **Ocultación fiable de la pantalla de acceso**: se añade la regla
+  `.pantalla-login[hidden] { display: none; }` para que el atributo `hidden` prevalezca
+  sobre el estilo de la pantalla.
 - **Leaflet servido desde el propio repositorio** (`vendor/leaflet/`), eliminando la
   dependencia del CDN externo.
 - **Almacenamiento local opcional**: si está bloqueado, la sesión funciona solo en memoria.
