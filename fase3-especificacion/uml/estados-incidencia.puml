@@ -1,6 +1,8 @@
 @startuml estados-incidencia
 ' Diagrama de estados de la incidencia reportada y su ticket
-' Derivado del parrafo rosado 2 + RF-15..RF-18 (actualizado 25/08/2026 tras Entrevista 1)
+' Rehecho 12/09/2026 segun comentarios del tutor (pags 97-98 de la revision):
+' plano (sin estados compuestos ni segundos puntos de inicio), sin titulo
+' interno, sin marcadores [S-XX].
 skinparam backgroundColor #FFFFFF
 skinparam shadowing false
 skinparam defaultFontName "Segoe UI"
@@ -9,9 +11,6 @@ skinparam ArrowColor #6B7280
 skinparam ArrowThickness 1.2
 skinparam ArrowFontColor #4B5563
 skinparam ArrowFontSize 11
-skinparam TitleFontName "Segoe UI Semibold"
-skinparam TitleFontSize 17
-skinparam TitleFontColor #111827
 skinparam state {
   BackgroundColor #F7F8FA
   BorderColor #CB0017
@@ -26,29 +25,15 @@ skinparam state {
   EndColor #111827
 }
 
-title Ciclo de vida de una incidencia y su ticket
-
-[*] --> Reportada : usuario reporta\n(4 tipos, RF-15)
-
 state "Reportada" as Reportada : registrada con\nubicación y fecha
+state "Abierta" as Abierta : ticket creado en el panel web\ncon gravedad grave/media
+state "En curso" as EnCurso : derivada a mantenimiento\nURJC o a LumenSmart
+state "Resuelta" as Resuelta : se notifica a\nquien reportó
 
-state "Efecto en el algoritmo" as Efecto {
-  [*] --> PendienteRevision : reporte subjetivo\n(zona solitaria/miedo)
-  PendienteRevision --> Penalizando : el admin asigna un\ngrado de inseguridad [S-12]
-  Penalizando --> Penalizando : el admin cambia\nel grado [S-12]
-  Penalizando --> SinEfecto : el admin disuelve\nla penalización [S-12]
-  SinEfecto --> [*]
-}
-
-state "Ticket de resolución" as TicketState {
-  [*] --> Abierto
-  Abierto : creado en el panel web,\ncon gravedad grave/media (RF-17)
-  Abierto --> EnCurso : el admin deriva a\nmantenimiento URJC\no LumenSmart [S-10]
-  EnCurso --> Resuelto : intervención completada
-  Resuelto : se notifica a quien\nreportó (RF-18)
-  Resuelto --> [*]
-}
-
-Reportada --> Efecto
-Reportada --> TicketState
+[*] --> Reportada : usuario reporta\n(cuatro tipos)
+Reportada --> Abierta : el panel genera\nel ticket
+Abierta --> Abierta : el administrador asigna o\ncambia el grado de inseguridad
+Abierta --> EnCurso : el administrador\nderiva la intervención
+EnCurso --> Resuelta : intervención\ncompletada
+Resuelta --> [*]
 @enduml

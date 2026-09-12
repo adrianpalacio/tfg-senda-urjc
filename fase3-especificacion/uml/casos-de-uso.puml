@@ -1,9 +1,15 @@
 @startuml casos-de-uso
-' Rama tradicional - catalogo CU-01..CU-10 (actualizado 25/08/2026 tras Entrevista 1)
+' Rama tradicional - catalogo CU-01..CU-10 + casos subordinados
+' Rehecho 12/09/2026 segun comentarios del tutor (pags 95-96 de la revision):
+' sin flechas actor-CU, sin notas, sin titulo interno, mas casos de uso,
+' separada la solicitud de acompanamiento de su atencion, Seguridad/Contacto
+' desconectados de CU-03 (participan via "Recibir alerta"/"Seguir ubicacion").
 left to right direction
 skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam linetype polyline
+skinparam nodesep 8
+skinparam ranksep 60
 skinparam backgroundColor #FFFFFF
 skinparam defaultFontName "Segoe UI"
 skinparam defaultFontSize 12
@@ -11,9 +17,6 @@ skinparam ArrowColor #6B7280
 skinparam ArrowThickness 1.1
 skinparam ArrowFontColor #4B5563
 skinparam ArrowFontSize 10
-skinparam TitleFontName "Segoe UI Semibold"
-skinparam TitleFontSize 17
-skinparam TitleFontColor #111827
 skinparam usecase {
   BackgroundColor #F7F8FA
   BorderColor #CB0017
@@ -31,65 +34,79 @@ skinparam rectangle {
   BorderColor #D1D5DB
   FontColor #6B7280
 }
-skinparam note {
-  BackgroundColor #FFF7ED
-  BorderColor #F59E0B
-  FontColor #7C2D12
-  FontSize 10
-}
-
-title Casos de uso --- Senda URJC
 
 actor "Usuario\n(comunidad URJC)" as Usuario
 actor "Voluntario" as Voluntario
-actor "Administración web\n(PDI/PTGAS)" as Admin
 
-rectangle "Senda URJC" {
+rectangle "Senda URJC — aplicación móvil" {
   usecase "CU-01 Autenticarse\n(SSO / LDAP)" as CU01
+  usecase "Cerrar sesión" as CUCerrar
   usecase "CU-02 Solicitar\nruta segura" as CU02
+  usecase "Elegir ruta accesible\n(sin escaleras)" as CUAcc
+  usecase "Consultar índice\nde seguridad" as CUIsp
   usecase "CU-03 Realizar trayecto\ncon modo «Voy contigo»" as CU03
+  usecase "Compartir ubicación\nen tiempo real" as CUUbi
+  usecase "Confirmar estado\n«estoy bien»" as CUOk
+  usecase "Recalcular ruta\ndurante el trayecto" as CURecalc
+  usecase "Solicitar acompañamiento\na un voluntario" as CUSolAc
+  usecase "CU-07 Atender solicitud\nde acompañamiento" as CU07
   usecase "CU-04 Usar botón de\nemergencia (SOS)" as CU04
   usecase "CU-05 Reportar incidencia\ndel entorno" as CU05
-  usecase "CU-06 Configurar perfil\n(contacto / voluntario)" as CU06
-  usecase "CU-07 Atender solicitud de\nacompañamiento (físico)" as CU07
-  usecase "CU-08 Gestionar tickets\nde incidencias (web)" as CU08
-  usecase "CU-09 Estadísticas y\nmapas de calor (web)" as CU09
-  usecase "CU-10 Ajustar parámetros\nde seguridad (web)" as CU10
+  usecase "Consultar el estado de\nsus incidencias" as CUEstInc
+  usecase "CU-06 Configurar perfil" as CU06
+  usecase "Configurar contacto\nde confianza" as CUCont
+  usecase "Inscribirse o darse de baja\ncomo voluntario" as CUVol
+  usecase "Cambiar idioma\n(ES / EN / ZH)" as CUIdio
+  usecase "Recibir alerta" as CUAlerta
+  usecase "Seguir la ubicación\ncompartida" as CUSeguir
+}
+
+rectangle "Senda URJC — panel web de administración" {
+  usecase "CU-08 Gestionar tickets\nde incidencias" as CU08
+  usecase "Derivar a mantenimiento\nURJC o LumenSmart" as CUDeriv
+  usecase "Asignar grado de\ninseguridad a un reporte" as CUGrado
+  usecase "CU-09 Consultar estadísticas\ny mapas de calor" as CU09
+  usecase "CU-10 Ajustar parámetros\nde seguridad" as CU10
 }
 
 actor "Contacto de\nconfianza" as Contacto
 actor "Servicio de Seguridad\n(cuentas genéricas)" as Seguridad
+actor "Administración web\n(personal docente y de administración)" as Admin
 actor "LumenSmart\n<<sistema externo>>" as Lumen
 
-Usuario --> CU01
-Usuario --> CU02
-Usuario --> CU03
-Usuario --> CU04
-Usuario --> CU05
-Usuario --> CU06
-Voluntario --> CU07
-Admin --> CU08
-Admin --> CU09
-Admin --> CU10
+' Asociaciones actor - caso de uso (sin flecha)
+Usuario -- CU01
+Usuario -- CUCerrar
+Usuario -- CU02
+Usuario -- CUIsp
+Usuario -- CU03
+Usuario -- CUOk
+Usuario -- CUSolAc
+Usuario -- CU04
+Usuario -- CU05
+Usuario -- CUEstInc
+Usuario -- CU06
+Voluntario -- CU07
+Contacto -- CUAlerta
+Contacto -- CUSeguir
+Seguridad -- CUAlerta
+Admin -- CU08
+Admin -- CU09
+Admin -- CU10
+Lumen -- CU02
+Lumen -- CU08
 
-CU02 ..> CU01 : <<include>>
-CU03 ..> CU02 : <<include>>
+' Relaciones include / extend
+CUAcc .> CU02 : <<extend>>
+CURecalc .> CU03 : <<extend>>
+CUOk .> CU03 : <<extend>>
+CU03 ..> CUUbi : <<include>>
+CUSolAc .> CU03 : <<extend>>
+CU07 .> CUSolAc : <<extend>>
 CU04 .> CU03 : <<extend>>
-CU07 .> CU03 : <<extend>>
-
-CU03 --> Contacto
-CU03 --> Seguridad
-CU04 --> Seguridad
-CU02 <-- Lumen
-CU03 <-- Lumen
-
-note bottom of CU08
-  App móvil = uso general (CU-01..07);
-  panel web = administración (CU-08..10)
-  [Entrevista 1, corrige S-11]
-end note
-note bottom of CU04
-  Funcionalidad asumida
-  [SUPUESTO S-04]
-end note
+CUCont ..> CU06 : <<include>>
+CUVol ..> CU06 : <<include>>
+CUIdio ..> CU06 : <<include>>
+CUDeriv ..> CU08 : <<include>>
+CUGrado ..> CU08 : <<include>>
 @enduml

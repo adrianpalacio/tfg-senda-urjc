@@ -1,20 +1,21 @@
 @startuml clases-analisis
-' Rama tradicional - clases de analisis (actualizado 25/08/2026 tras Entrevista 1)
+' Rama tradicional - clases de analisis
+' Rehecho 12/09/2026 segun comentarios del tutor (pag 96 de la revision):
+' sin titulo interno, sin circulito de clase, sin marcadores de direccion en
+' las etiquetas, sin notas, y con la jerarquia de roles que hereda de Usuario.
 ' Nota: se evita el uso de parentesis en los atributos porque con "hide methods"
 ' PlantUML los interpretaria como metodos y los ocultaria.
 skinparam backgroundColor #FFFFFF
 skinparam shadowing false
 skinparam classAttributeIconSize 0
 hide methods
+hide circle
 skinparam defaultFontName "Segoe UI"
 skinparam defaultFontSize 12
 skinparam ArrowColor #6B7280
 skinparam ArrowThickness 1.1
 skinparam ArrowFontColor #4B5563
 skinparam ArrowFontSize 10
-skinparam TitleFontName "Segoe UI Semibold"
-skinparam TitleFontSize 17
-skinparam TitleFontColor #111827
 skinparam class {
   BackgroundColor #F7F8FA
   BorderColor #CB0017
@@ -24,14 +25,6 @@ skinparam class {
   AttributeFontColor #4B5563
   AttributeFontSize 11
 }
-skinparam note {
-  BackgroundColor #FFF7ED
-  BorderColor #F59E0B
-  FontColor #7C2D12
-  FontSize 10
-}
-
-title Clases de análisis --- Senda URJC
 
 class Usuario {
   credencialCorporativa
@@ -40,16 +33,30 @@ class Usuario {
   discapacidad o movilidad
 }
 
-class ContactoConfianza {
-  nombre
-  medioDeContacto
-  ambito: solo comunidad URJC
-}
-
 class Voluntario {
   estadoInscripcion
   disponibilidad: calendario
   acompanamiento: fisico
+}
+
+class Administrador {
+  ambitoDeGestion: tickets/parametros
+  accesoPanelWeb: bool
+}
+
+class PersonalSeguridad {
+  cuentaGenerica: no nominal
+  turno
+}
+
+Usuario <|-- Voluntario
+Usuario <|-- Administrador
+Usuario <|-- PersonalSeguridad
+
+class ContactoConfianza {
+  nombre
+  medioDeContacto
+  ambito: solo comunidad URJC
 }
 
 class Trayecto {
@@ -114,24 +121,21 @@ class Estadistica {
   agregadoAnonimizado
 }
 
-Usuario "1" -- "0..1" ContactoConfianza : configura >
-Usuario "1" -- "0..1" Voluntario : se inscribe como >
-Usuario "1" -- "0..*" Trayecto : realiza >
-Trayecto "1" -- "1..*" Ruta : sigue, recalculo re-ancla >
-Ruta "1" -- "1..*" Tramo : se compone de >
-Tramo "1" -- "0..*" DatoLumenSmart : se valora con >
-Trayecto "1" -- "0..*" Prealerta : genera >
-Prealerta "1" -- "0..1" Alerta : escala a >
-Trayecto "0..1" -- "0..1" Voluntario : acompañado por >
-Alerta "0..*" -- "0..1" ContactoConfianza : notifica a >
-Usuario "1" -- "0..*" Incidencia : reporta >
-Incidencia "1" -- "1" Ticket : genera >
-Incidencia "0..*" -- "1..*" Tramo : penaliza >
-ParametroSeguridad "1..*" -- "0..*" Ruta : pondera el indice de >
-Trayecto "0..*" -- "0..*" Estadistica : se agrega en >
-
-note right of Ruta : historial máx. 24 h\nsalvo incidencia (RNF-02)
-note bottom of Ticket : derivación URJC / LumenSmart\n[S-10, Entrevista 1]
-note bottom of Incidencia : penalización manual\ndel admin [S-12]
-note right of Prealerta : umbrales configurables\n[S-05]
+Usuario "1" -- "0..1" ContactoConfianza : configura
+Usuario "1" -- "0..*" Trayecto : realiza
+Trayecto "1" -- "1..*" Ruta : sigue
+Ruta "1" -- "1..*" Tramo : se compone de
+Tramo "1" -- "0..*" DatoLumenSmart : se valora con
+Trayecto "1" -- "0..*" Prealerta : genera
+Prealerta "1" -- "0..1" Alerta : escala a
+Trayecto "0..1" -- "0..1" Voluntario : acompañado por
+Alerta "0..*" -- "0..1" ContactoConfianza : notifica a
+Alerta "0..*" -- "0..1" PersonalSeguridad : notifica a
+Usuario "1" -- "0..*" Incidencia : reporta
+Incidencia "1" -- "1" Ticket : genera
+Incidencia "0..*" -- "1..*" Tramo : penaliza
+Administrador "1..*" -- "0..*" Ticket : gestiona
+Administrador "1..*" -- "0..*" ParametroSeguridad : ajusta
+ParametroSeguridad "1..*" -- "0..*" Ruta : pondera el indice de
+Trayecto "0..*" -- "0..*" Estadistica : se agrega en
 @enduml
