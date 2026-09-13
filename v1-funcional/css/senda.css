@@ -189,13 +189,15 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: .88em; }
   .cabecera-titulo { font-size: 1.05em; }
   .cabecera-acciones { order: 2; margin-left: auto; gap: 10px; }
   .cabecera-nav {
-    order: 3; flex-basis: 100%; flex: 1 0 100%; gap: 3px;
-    flex-wrap: nowrap; justify-content: space-between;
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; -ms-overflow-style: none;
+    order: 3; flex-basis: 100%; width: 100%; gap: 3px;
+    flex-wrap: nowrap; justify-content: stretch;
+    overflow: hidden;
   }
-  .cabecera-nav::-webkit-scrollbar { display: none; }
-  .nav-btn { padding: 6px 8px; font-size: .82em; white-space: nowrap; flex: 0 1 auto; }
+  .nav-btn {
+    flex: 1 1 0; min-width: 0; text-align: center;
+    padding: 6px 4px; font-size: .8em; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
   .enlace-admin { font-size: .82em; }
   .btn-sos { width: 40px; height: 40px; font-size: .78em; box-shadow: 0 0 0 3px rgba(255,255,255,.25); }
   .control-hora input[type=range] { width: 130px; }
