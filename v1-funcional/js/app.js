@@ -104,6 +104,8 @@
         document.querySelectorAll(".vista").forEach(x => x.classList.remove("activo"));
         b.classList.add("activo");
         document.getElementById("vista-" + b.dataset.vista).classList.add("activo");
+        /* refrescar «Voy contigo» al entrar, para reflejar la ruta elegida */
+        if (b.dataset.vista === "voycontigo") refrescarVoyContigo(VoyContigo.estadoPublico());
       });
     });
     montarVistaRutas();
@@ -153,15 +155,18 @@
     const cont = document.getElementById("lista-rutas");
     if (origen === destino) { cont.innerHTML = "<p class='ruta-aviso'>Elige origen y destino distintos.</p>"; return; }
     rutasActuales = Router.calcularRutas(origen, destino, { sinEscaleras });
-    rutaElegida = null;
+    rutaElegida = rutasActuales[0] || null;   // la recomendada queda elegida por defecto
     pintarRutas();
+    if (typeof refrescarVoyContigo === "function") refrescarVoyContigo(VoyContigo.estadoPublico());
     const cfg = ISP.config();
     cont.innerHTML = rutasActuales.length === 0
       ? "<p class='ruta-aviso'>No hay ruta disponible con ese filtro.</p>"
-      : rutasActuales.map((r, i) => {
+      : `<p class="nota-elegir">Toca una ruta para elegirla; la recomendada ya está seleccionada. Después ve a «Voy contigo».</p>` +
+        rutasActuales.map((r, i) => {
           const clase = r.isp >= 70 ? "isp-alta" : r.isp >= cfg.umbralCritico ? "isp-media" : "isp-baja";
+          const sel = rutaElegida === r ? " elegida" : "";
           return `
-          <div class="tarjeta-ruta" data-i="${i}" role="button" tabindex="0">
+          <div class="tarjeta-ruta${sel}" data-i="${i}" role="button" tabindex="0">
             <div class="fila">
               <strong>Ruta ${i + 1}</strong>
               <span class="isp-pastilla ${clase}">${r.isp}</span>
@@ -169,6 +174,7 @@
             <div class="fila"><span>${r.distancia} m · ${r.minutos} min</span>
               <span>${r.conEscaleras ? "escaleras" : "sin escaleras"}</span></div>
             ${r.segura ? "" : `<p class="ruta-aviso">Tramo por debajo del umbral de seguridad (${cfg.umbralCritico}): no recomendada.</p>`}
+            <div class="marca-ruta"><span class="marca-elegir">Pulsa para elegir esta ruta</span><span class="marca-elegida">✓ Ruta elegida</span></div>
           </div>`;
         }).join("") +
         (rutasActuales.length === 1
@@ -185,6 +191,7 @@
     pintarRutas();
     /* RF-13 / S-06: si hay trayecto activo, la nueva ruta re-ancla la supervisión sin alerta */
     if (VoyContigo.estadoPublico().estado !== "inactivo") VoyContigo.recalcular(rutaElegida);
+    refrescarVoyContigo(VoyContigo.estadoPublico());   // habilita el botón de «Voy contigo»
   }
 
   function pintarRutas() {

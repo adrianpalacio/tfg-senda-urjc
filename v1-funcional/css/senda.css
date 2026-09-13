@@ -107,6 +107,12 @@ body {
 }
 .tarjeta-ruta:hover { border-color: var(--urjc-rojo); }
 .tarjeta-ruta.elegida { border-color: var(--urjc-rojo); background: #FFF5F6; }
+.nota-elegir { font-size: .82em; color: #777; margin: 6px 0 2px; }
+.marca-ruta { margin-top: 8px; font-size: .8em; font-weight: 600; }
+.marca-elegir { color: var(--urjc-rojo); }
+.marca-elegida { color: var(--verde-ok); display: none; }
+.tarjeta-ruta.elegida .marca-elegir { display: none; }
+.tarjeta-ruta.elegida .marca-elegida { display: inline; }
 .tarjeta-ruta .fila { display: flex; justify-content: space-between; align-items: center; }
 .isp-pastilla {
   display: inline-block; min-width: 52px; text-align: center; border-radius: 999px;
