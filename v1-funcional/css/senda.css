@@ -180,3 +180,21 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: .88em; }
   .cabecera { flex-wrap: wrap; gap: 8px; }
   .admin-grid { grid-template-columns: 1fr; }
 }
+
+/* Ancho de móvil: cabecera en dos filas (marca + SOS arriba, pestañas debajo) */
+@media (max-width: 520px) {
+  .cabecera { gap: 6px; padding: 6px 10px; flex-wrap: wrap; align-items: center; }
+  .cabecera-marca { gap: 6px; order: 1; }
+  .cabecera-logo { height: 26px; }
+  .cabecera-titulo { font-size: 1.05em; }
+  .cabecera-acciones { order: 2; margin-left: auto; gap: 10px; }
+  .cabecera-nav {
+    order: 3; flex-basis: 100%; flex: 1 0 100%; gap: 2px;
+    overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch;
+  }
+  .nav-btn { padding: 6px 12px; font-size: .9em; white-space: nowrap; }
+  .enlace-admin { font-size: .82em; }
+  .btn-sos { width: 40px; height: 40px; font-size: .78em; box-shadow: 0 0 0 3px rgba(255,255,255,.25); }
+  .control-hora input[type=range] { width: 130px; }
+  .control-hora { padding: 6px 10px; font-size: .82em; }
+}
